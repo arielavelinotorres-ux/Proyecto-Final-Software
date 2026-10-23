@@ -1,15 +1,19 @@
 import { api } from '../../api/index.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { tienePermisoAdmin } from '../../utils/permisos.js'
 import useAsync from '../../hooks/useAsync.js'
 import { Cargando, Encabezado, ErrorCaja, StatCard, Vacio } from '../../components/ui.jsx'
 import { fechaHora } from '../../utils/formato.js'
 
 export default function Reportes() {
+  const { usuario } = useAuth()
+  const puedeAuditar = tienePermisoAdmin(usuario, 'auditoria.consultar')
   const { datos, cargando, error, recargar } = useAsync(async () => {
     const [usuarios, cursos, auditoria] = await Promise.all([
-      api.usuarios.listar(), api.cursos.listar(), api.admin.auditoria(200),
+      api.usuarios.listar(), api.cursos.listar(), puedeAuditar ? api.admin.auditoria(200) : Promise.resolve([]),
     ])
     return { usuarios, cursos, auditoria }
-  }, [])
+  }, [puedeAuditar])
 
   if (cargando) return <Cargando />
   if (error) return <ErrorCaja mensaje={error} alReintentar={recargar} />
@@ -20,7 +24,7 @@ export default function Reportes() {
       <dl className="stats">
         <StatCard etiqueta="Usuarios" valor={datos.usuarios.length} icono="bi-people" />
         <StatCard etiqueta="Cursos" valor={datos.cursos.length} icono="bi-journal-bookmark" />
-        <StatCard etiqueta="Eventos recientes" valor={datos.auditoria.length} icono="bi-shield-check" />
+        {puedeAuditar && <StatCard etiqueta="Eventos recientes" valor={datos.auditoria.length} icono="bi-shield-check" />}
       </dl>
       <section className="tarjeta reportes-exportar">
         <h2>Exportaciones</h2>
@@ -28,10 +32,10 @@ export default function Reportes() {
         <div className="acciones-linea">
           <button type="button" className="btn btn-claro" onClick={() => descargarCsv('usuarios-homeclass.csv', ['id', 'nombre', 'correo', 'rol', 'activo'], datos.usuarios)}><i className="bi bi-download" /> Usuarios</button>
           <button type="button" className="btn btn-claro" onClick={() => descargarCsv('cursos-homeclass.csv', ['id', 'codigo', 'nombre', 'periodo', 'docente', 'estudiantes', 'promedio', 'asistencia'], datos.cursos)}><i className="bi bi-download" /> Cursos</button>
-          <button type="button" className="btn btn-claro" onClick={() => descargarCsv('auditoria-homeclass.csv', ['fecha', 'usuario', 'accion', 'entidad', 'entidadId', 'detalle'], datos.auditoria)}><i className="bi bi-download" /> Auditoría</button>
+          {puedeAuditar && <button type="button" className="btn btn-claro" onClick={() => descargarCsv('auditoria-homeclass.csv', ['fecha', 'usuario', 'accion', 'entidad', 'entidadId', 'detalle'], datos.auditoria)}><i className="bi bi-download" /> Auditoría</button>}
         </div>
       </section>
-      <section className="reportes-auditoria">
+      {puedeAuditar && <section className="reportes-auditoria">
         <header className="seccion-cabecera"><div><h2>Actividad reciente</h2><p className="suave">Últimos {datos.auditoria.length} eventos registrados.</p></div></header>
         {!datos.auditoria.length && <Vacio icono="bi-shield-check" titulo="Sin actividad registrada" texto="Las acciones administrativas y académicas aparecerán aquí." />}
         {datos.auditoria.length > 0 && (
@@ -50,7 +54,7 @@ export default function Reportes() {
             </table>
           </div>
         )}
-      </section>
+      </section>}
     </>
   )
 }

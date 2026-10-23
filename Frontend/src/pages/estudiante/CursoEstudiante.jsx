@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/index.js'
 import { useAviso } from '../../context/ToastContext.jsx'
 import useAsync from '../../hooks/useAsync.js'
@@ -11,9 +11,16 @@ import { fechaCorta, fechaHora, num, tamano, TIPOS_EVALUACION } from '../../util
 
 export default function CursoEstudiante() {
   const id = Number(useParams().id)
+  const [searchParams] = useSearchParams()
+  const seccion = searchParams.get('seccion')
   const { datos, cargando, error, recargar } = useAsync(() => api.cursos.miCurso(id), [id])
   const { datos: materiales, error: errorMat } = useAsync(() => api.materiales.listar(id), [id])
   const avisar = useAviso()
+
+  useEffect(() => {
+    if (!datos || !['evaluaciones', 'avisos', 'materiales'].includes(seccion)) return
+    document.getElementById(`curso-seccion-${seccion}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [datos, seccion])
 
   if (cargando && !datos) return <Cargando />
   if (error) return <ErrorCaja mensaje={error} alReintentar={recargar} />
@@ -38,14 +45,14 @@ export default function CursoEstudiante() {
         <div className="stat"><dt>Mi estado</dt><dd className="dd-badge"><BadgeRiesgo nivel={datos.riesgo} /></dd></div>
       </dl>
 
-      <h2 className="seccion-titulo">Evaluaciones y entregas</h2>
+      <h2 id="curso-seccion-evaluaciones" className="seccion-titulo">Evaluaciones y entregas</h2>
       <div className="evaluaciones">
         {datos.evaluaciones.map((ev) => <TarjetaEvaluacion key={ev.id} ev={ev} alCambiar={recargar} />)}
       </div>
 
-      <AvisosCurso cursoId={id} />
+      <div id="curso-seccion-avisos"><AvisosCurso cursoId={id} /></div>
 
-      <section className="tarjeta">
+      <section id="curso-seccion-materiales" className="tarjeta">
         <h2>Materiales del curso</h2>
         {errorMat && <ErrorCaja mensaje={errorMat} />}
         {materiales?.length === 0 && <Vacio icono="bi-folder2" titulo="Sin materiales" texto="Tu docente aún no ha subido archivos." />}

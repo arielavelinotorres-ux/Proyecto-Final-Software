@@ -47,6 +47,7 @@ const del = (r) => pedir('DELETE', r)
 export const httpApi = {
   auth: {
     login: (correo, clave) => post('/auth/login', { correo, clave }),
+    solicitarRestablecimiento: (correo) => post('/auth/solicitar-restablecimiento', { correo }),
     sesion: () => get('/auth/sesion'),
     salir: async () => {},
   },
@@ -56,6 +57,7 @@ export const httpApi = {
     listar: () => get('/usuarios'),
     crear: (d) => post('/usuarios', d),
     actualizar: (id, d) => put(`/usuarios/${id}`, d),
+    restablecerClave: (id, nueva) => post(`/usuarios/${id}/restablecer-clave`, { nueva }),
     eliminar: (id) => del(`/usuarios/${id}`),
   },
   perfil: {

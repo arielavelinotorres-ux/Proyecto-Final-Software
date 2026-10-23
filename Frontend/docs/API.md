@@ -14,6 +14,7 @@ Base: `VITE_API_URL` (por defecto `/api`). Autenticación: `Authorization: Beare
 | Método y ruta | Cuerpo | Respuesta |
 |---|---|---|
 | `POST /auth/login` | `{ correo, clave }` | `{ token, usuario: { id, nombre, correo, rol, activo } }` (401 si falla; 403 si cuenta inactiva) |
+| `POST /auth/solicitar-restablecimiento` | `{ correo }` | Mensaje genérico; registra la solicitud solo para cuentas activas de estudiantes/docentes. El quinto intento fallido también bloquea y genera solicitud. |
 | `GET /auth/sesion` | | `usuario` (401 si el token no sirve) |
 
 ## Dashboard — `GET /dashboard` (respuesta según el rol de quien pregunta)
@@ -34,6 +35,9 @@ Base: `VITE_API_URL` (por defecto `/api`). Autenticación: `Authorization: Beare
 | `POST /usuarios` | `{ nombre, correo, rol, clave }` (clave ≥ 8) | `usuario` · 409/400 si el correo ya existe |
 | `PUT /usuarios/{id}` | `{ nombre, correo, rol, activo }` | `usuario` · no puede desactivarse ni cambiar su propio rol |
 | `DELETE /usuarios/{id}` | | 204 · no puede borrarse a sí mismo; un docente con cursos no se borra |
+| `POST /usuarios/{id}/restablecer-clave` | `{ nueva }` (clave ≥ 8) | 204 · solo admin; restablece y desbloquea una cuenta docente/estudiante |
+
+Los usuarios con rol `admin` tienen `tipoAdmin`: `general`, `usuarios`, `cursos` o `reportes`. `permisosAdmin` informa los módulos autorizados; solo administración general puede asignar perfiles administrativos.
 
 ## Reportes y comunicación
 

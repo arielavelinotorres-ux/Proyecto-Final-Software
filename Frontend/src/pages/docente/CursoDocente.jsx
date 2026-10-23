@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/index.js'
 import useAsync from '../../hooks/useAsync.js'
 import { Cargando, Encabezado, ErrorCaja, StatCard, Tabs } from '../../components/ui.jsx'
@@ -22,9 +22,10 @@ const PESTANAS = [
 
 export default function CursoDocente() {
   const id = Number(useParams().id)
+  const [searchParams] = useSearchParams()
   const { datos: curso, cargando, error, recargar } = useAsync(() => api.cursos.obtener(id), [id])
   const { datos: resumen, recargar: recargarResumen } = useAsync(() => api.cursos.listar().then((l) => l.find((c) => c.id === id)), [id])
-  const [pestana, setPestana] = useState('notas')
+  const [pestana, setPestana] = useState(() => PESTANAS.some((p) => p.id === searchParams.get('seccion')) ? searchParams.get('seccion') : 'notas')
   const [evaluacionId, setEvaluacionId] = useState(null) // para saltar de Evaluaciones a Entregas
 
   if (cargando && !curso) return <Cargando />

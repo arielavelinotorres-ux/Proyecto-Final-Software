@@ -17,9 +17,10 @@ export default function Features() {
   )
 }
 
-function FeatureCard({ icono, titulo, texto }) {
+function FeatureCard({ icono, titulo, texto, imagen, alt }) {
   return (
     <article className="landing-funcion">
+      <img className="landing-funcion-imagen" src={imagen} alt={alt} loading="lazy" />
       <span className="landing-funcion-icono"><i className={`bi ${icono}`} /></span>
       <h3>{titulo}</h3>
       <p>{texto}</p>

@@ -29,6 +29,9 @@ namespace HomeClassApi.Controllers
                 return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
             }
 
+            if (usuario.Rol == "admin" && !AuthService.TienePermisoAdmin(usuario, "general"))
+                return Error(HttpStatusCode.Forbidden, "El resumen institucional está reservado para administración general.");
+
             var usuarios = AuthService.ObtenerUsuarios();
             var cursos = AuthService.ObtenerCursos(usuario.Rol, usuario.Id).Cast<Dictionary<string, object>>().ToList();
             foreach (var curso in cursos)
