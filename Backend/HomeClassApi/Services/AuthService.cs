@@ -10,10 +10,15 @@ namespace HomeClassApi.Services
 {
     public static class AuthService
     {
+        private static readonly string[] PermisosAdminDisponibles = {
+            "general", "usuarios", "usuarios.crear", "usuarios.editar", "usuarios.eliminar", "usuarios.restablecer",
+            "cursos", "cursos.consultar", "cursos.crear", "cursos.editar", "cursos.eliminar", "cursos.matricular",
+            "reportes", "reportes.consultar", "auditoria.consultar"
+        };
         public static UsuarioSeed BuscarPorCorreo(string correo)
         {
             var row = SqlData.Query(
-                "SELECT Id, Nombre, Correo, ClaveHash, Rol, Activo FROM dbo.Usuario WHERE Correo = @Correo",
+                    "SELECT Id, Nombre, Correo, ClaveHash, Rol, Activo, IntentosFallidos, Bloqueado, SolicitudRestablecimiento, TipoAdmin, PermisosAdmin FROM dbo.Usuario WHERE Correo = @Correo",
                 SqlData.Param("@Correo", SqlDbType.NVarChar, correo, 254)).FirstOrDefault();
             return row == null ? null : new UsuarioSeed
             {
@@ -22,29 +27,46 @@ namespace HomeClassApi.Services
                 Correo = (string)row["Correo"],
                 ClaveHash = (string)row["ClaveHash"],
                 Rol = (string)row["Rol"],
-                Activo = (bool)row["Activo"]
+                Activo = (bool)row["Activo"],
+                IntentosFallidos = (int)row["IntentosFallidos"],
+                Bloqueado = (bool)row["Bloqueado"],
+                SolicitudRestablecimiento = (bool)row["SolicitudRestablecimiento"],
+                TipoAdmin = (string)row["TipoAdmin"],
+                PermisosAdminCsv = row["PermisosAdmin"] == DBNull.Value ? null : Convert.ToString(row["PermisosAdmin"])
             };
         }
 
-        public static UsuarioRespuesta ValidarLogin(string correo, string clave)
+        public static UsuarioRespuesta ValidarLogin(string correo, string clave, out bool bloqueado)
         {
+            bloqueado = false;
             var usuario = BuscarPorCorreo(correo);
             if (usuario == null || !usuario.Activo)
             {
                 return null;
             }
 
-            if (!VerificarClave(clave, usuario.ClaveHash))
+            if (usuario.Bloqueado)
             {
+                bloqueado = true;
                 return null;
             }
 
-            if (!usuario.ClaveHash.StartsWith("pbkdf2-sha256$", StringComparison.Ordinal))
+            if (!VerificarClave(clave, usuario.ClaveHash))
             {
-                SqlData.Execute("UPDATE dbo.Usuario SET ClaveHash=@Hash WHERE Id=@Id",
-                    SqlData.Param("@Hash", SqlDbType.VarChar, Hash(clave), 120),
-                    SqlData.Param("@Id", SqlDbType.Int, usuario.Id));
+                if (usuario.Rol == "estudiante" || usuario.Rol == "docente")
+                {
+                    SqlData.Execute(
+                        "UPDATE dbo.Usuario SET IntentosFallidos = IntentosFallidos + 1, Bloqueado = CASE WHEN IntentosFallidos + 1 >= 5 THEN 1 ELSE 0 END, SolicitudRestablecimiento = CASE WHEN IntentosFallidos + 1 >= 5 THEN 1 ELSE SolicitudRestablecimiento END WHERE Id = @Id AND Bloqueado = 0",
+                        SqlData.Param("@Id", SqlDbType.Int, usuario.Id));
+                    var actualizada = BuscarPorCorreo(correo);
+                    bloqueado = actualizada != null && actualizada.Bloqueado;
+                }
+                return null;
             }
+
+            SqlData.Execute("UPDATE dbo.Usuario SET ClaveHash=@Hash, IntentosFallidos=0, Bloqueado=0, SolicitudRestablecimiento=0 WHERE Id=@Id",
+                SqlData.Param("@Hash", SqlDbType.VarChar, usuario.ClaveHash.StartsWith("pbkdf2-sha256$", StringComparison.Ordinal) ? usuario.ClaveHash : Hash(clave), 120),
+                SqlData.Param("@Id", SqlDbType.Int, usuario.Id));
 
             return new UsuarioRespuesta
             {
@@ -52,22 +74,103 @@ namespace HomeClassApi.Services
                 Nombre = usuario.Nombre,
                 Correo = usuario.Correo,
                 Rol = usuario.Rol,
-                Activo = usuario.Activo
+                Activo = usuario.Activo,
+                TipoAdmin = usuario.TipoAdmin,
+                PermisosAdmin = PermisosAdmin(usuario.Rol, usuario.TipoAdmin, usuario.PermisosAdminCsv)
             };
         }
 
         public static UsuarioRespuesta ObtenerPorId(int id)
         {
             var row = SqlData.Query(
-                "SELECT Id, Nombre, Correo, Rol, Activo FROM dbo.Usuario WHERE Id = @Id",
+                "SELECT Id, Nombre, Correo, Rol, Activo, Bloqueado, SolicitudRestablecimiento, TipoAdmin, PermisosAdmin FROM dbo.Usuario WHERE Id = @Id",
                 SqlData.Param("@Id", SqlDbType.Int, id)).FirstOrDefault();
             return row == null ? null : MapUsuario(row);
         }
 
         public static List<UsuarioRespuesta> ObtenerUsuarios()
         {
-            return SqlData.Query("SELECT Id, Nombre, Correo, Rol, Activo FROM dbo.Usuario ORDER BY Nombre")
+            return SqlData.Query("SELECT Id, Nombre, Correo, Rol, Activo, Bloqueado, SolicitudRestablecimiento, TipoAdmin, PermisosAdmin FROM dbo.Usuario ORDER BY Nombre")
                 .Select(MapUsuario).ToList();
+        }
+
+        public static bool TienePermisoAdmin(UsuarioRespuesta usuario, string permiso)
+        {
+            if (usuario == null || usuario.Rol != "admin") return false;
+            var permisos = usuario.PermisosAdmin ?? new List<string>();
+            if (permisos.Contains("general") || permisos.Contains(permiso)) return true;
+            var separador = permiso.IndexOf('.');
+            if (separador > 0) return permisos.Contains(permiso.Substring(0, separador));
+            return permisos.Any(p => p.StartsWith(permiso + ".", StringComparison.Ordinal));
+        }
+
+        public static List<string> PermisosAdmin(string rol, string tipoAdmin)
+        {
+            if (rol != "admin") return new List<string>();
+            return PermisosAdmin(rol, tipoAdmin, null);
+        }
+
+        public static List<string> PermisosAdmin(string rol, string tipoAdmin, string almacenados)
+        {
+            if (rol != "admin") return new List<string>();
+            var permisos = string.IsNullOrWhiteSpace(almacenados)
+                ? new List<string>()
+                : almacenados.Split(',').Select(p => p.Trim()).Where(p => PermisosAdminDisponibles.Contains(p)).Distinct().ToList();
+            if (permisos.Count == 0)
+            {
+                if (tipoAdmin == "general") permisos.Add("general");
+                else if (new[] { "usuarios", "cursos", "reportes" }.Contains(tipoAdmin))
+                {
+                    permisos.Add(tipoAdmin);
+                    if (tipoAdmin == "reportes") permisos.Add("auditoria.consultar");
+                }
+            }
+            if (permisos.Contains("general")) return PermisosAdminDisponibles.ToList();
+            return permisos;
+        }
+
+        public static List<string> NormalizarPermisosAdmin(IEnumerable<string> solicitados, string tipoAdmin)
+        {
+            var permisos = solicitados == null
+                ? new List<string>()
+                : solicitados.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).Distinct().ToList();
+            if (permisos.Count == 0)
+            {
+                if (tipoAdmin == "general") permisos.Add("general");
+                else if (new[] { "usuarios", "cursos", "reportes" }.Contains(tipoAdmin))
+                {
+                    permisos.Add(tipoAdmin);
+                    if (tipoAdmin == "reportes") permisos.Add("auditoria.consultar");
+                }
+            }
+            return permisos;
+        }
+
+        public static bool PermisosAdminValidos(IEnumerable<string> permisos)
+        {
+            var lista = permisos == null ? new List<string>() : permisos.ToList();
+            return lista.Count > 0 && lista.All(PermisosAdminDisponibles.Contains) && (!lista.Contains("general") || lista.Count == 1);
+        }
+
+        public static bool PermisosAdminEquivalentes(UsuarioRespuesta usuario, IEnumerable<string> permisos)
+        {
+            var propuestos = new UsuarioRespuesta { Rol = "admin", PermisosAdmin = permisos.ToList() };
+            return PermisosAdminDisponibles.All(permiso => TienePermisoAdmin(usuario, permiso) == TienePermisoAdmin(propuestos, permiso));
+        }
+
+        public static bool SolicitarRestablecimiento(string correo)
+        {
+            return SqlData.Execute(
+                "UPDATE dbo.Usuario SET SolicitudRestablecimiento = 1 WHERE Correo = @Correo AND Activo = 1 AND Rol IN ('estudiante','docente')",
+                SqlData.Param("@Correo", SqlDbType.NVarChar, correo.Trim(), 254)) > 0;
+        }
+
+        public static bool RestablecerClave(int id, string nueva)
+        {
+            return SqlData.Execute(
+                "UPDATE dbo.Usuario SET ClaveHash = @Hash, IntentosFallidos = 0, Bloqueado = 0, SolicitudRestablecimiento = 0 WHERE Id = @Id AND Rol IN ('estudiante','docente')",
+                SqlData.Param("@Hash", SqlDbType.VarChar, Hash(nueva), 120),
+                SqlData.Param("@Id", SqlDbType.Int, id)) > 0;
         }
 
         public static IEnumerable<object> ObtenerCursos(string rol, int usuarioId)
@@ -102,7 +205,11 @@ namespace HomeClassApi.Services
                 Nombre = (string)row["Nombre"],
                 Correo = (string)row["Correo"],
                 Rol = (string)row["Rol"],
-                Activo = (bool)row["Activo"]
+                Activo = (bool)row["Activo"],
+                Bloqueado = (bool)row["Bloqueado"],
+                SolicitudRestablecimiento = (bool)row["SolicitudRestablecimiento"],
+                TipoAdmin = (string)row["TipoAdmin"],
+                PermisosAdmin = PermisosAdmin((string)row["Rol"], (string)row["TipoAdmin"], row["PermisosAdmin"] == DBNull.Value ? null : Convert.ToString(row["PermisosAdmin"]))
             };
         }
 

@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../../api/index.js'
 import { useAviso } from '../../context/ToastContext.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { tienePermisoAdmin } from '../../utils/permisos.js'
 import useAsync from '../../hooks/useAsync.js'
 import { Cargando, Confirmar, Encabezado, ErrorCaja, Vacio } from '../../components/ui.jsx'
 
 // Administración: matricular y quitar estudiantes de un curso.
 export default function CursoAdmin() {
   const id = Number(useParams().id)
+  const { usuario } = useAuth()
+  const puedeMatricular = tienePermisoAdmin(usuario, 'cursos.matricular')
   const avisar = useAviso()
   const { datos: curso, cargando, error, recargar } = useAsync(() => api.cursos.obtener(id), [id])
   const { datos: usuarios } = useAsync(() => api.usuarios.listar(), [])
@@ -47,7 +51,7 @@ export default function CursoAdmin() {
       <Encabezado titulo={curso.nombre} subtitulo={`${curso.codigo} · ${curso.periodo} · Docente: ${curso.docente}`} />
       {curso.descripcion && <p>{curso.descripcion}</p>}
 
-      <section className="tarjeta">
+      {puedeMatricular && <section className="tarjeta">
         <h2>Matricular estudiante</h2>
         <form className="fila-form" onSubmit={matricular}>
           <select aria-label="Estudiante" value={elegido} onChange={(e) => setElegido(e.target.value)} required>
@@ -56,7 +60,7 @@ export default function CursoAdmin() {
           </select>
           <button className="btn btn-primario" type="submit" disabled={!elegido}>Matricular</button>
         </form>
-      </section>
+      </section>}
 
       <section className="tarjeta">
         <h2>Estudiantes matriculados ({curso.estudiantes.length})</h2>
@@ -67,14 +71,14 @@ export default function CursoAdmin() {
             {curso.estudiantes.map((e) => (
               <li key={e.id}>
                 <div><strong>{e.nombre}</strong><div className="suave">{e.correo}</div></div>
-                <button type="button" className="btn btn-peligro-claro btn-chico" onClick={() => setQuitar(e)}>Quitar</button>
+                {puedeMatricular && <button type="button" className="btn btn-peligro-claro btn-chico" onClick={() => setQuitar(e)}>Quitar</button>}
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <Confirmar
+      {puedeMatricular && <Confirmar
         abierto={!!quitar}
         titulo="Quitar matrícula"
         textoBoton="Quitar"
@@ -82,7 +86,7 @@ export default function CursoAdmin() {
         alConfirmar={confirmarQuitar}
         alCancelar={() => setQuitar(null)}
         ocupado={ocupado}
-      />
+      />}
     </>
   )
 }

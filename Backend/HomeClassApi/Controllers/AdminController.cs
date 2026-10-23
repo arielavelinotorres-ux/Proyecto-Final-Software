@@ -17,7 +17,8 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo administración puede consultar auditoría.");
+            var permisos = actual.PermisosAdmin ?? new System.Collections.Generic.List<string>();
+            if (!AuthService.TienePermisoAdmin(actual, "auditoria.consultar") && !permisos.Contains("reportes")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para consultar auditoría.");
             limite = limite < 1 ? 1 : limite > 300 ? 300 : limite;
             return Ok(SqlData.Query("SELECT TOP (@Limite) a.Id AS id,a.UsuarioId AS usuarioId,COALESCE(u.Nombre,N'Cuenta eliminada') AS usuario,a.Accion AS accion,a.Entidad AS entidad,a.EntidadId AS entidadId,a.Detalle AS detalle,a.Fecha AS fecha FROM dbo.Auditoria a LEFT JOIN dbo.Usuario u ON u.Id=a.UsuarioId ORDER BY a.Fecha DESC,a.Id DESC",
                 SqlData.Param("@Limite", SqlDbType.Int, limite)));

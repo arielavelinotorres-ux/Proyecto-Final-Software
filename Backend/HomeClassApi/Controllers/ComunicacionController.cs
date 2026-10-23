@@ -77,7 +77,7 @@ namespace HomeClassApi.Controllers
 
         private static bool PuedeAcceder(UsuarioRespuesta usuario, int cursoId)
         {
-            if (usuario.Rol == "admin") return Convert.ToInt32(SqlData.Scalar("SELECT COUNT(*) FROM dbo.Curso WHERE Id=@CursoId", SqlData.Param("@CursoId", SqlDbType.Int, cursoId))) > 0;
+            if (usuario.Rol == "admin") return AuthService.TienePermisoAdmin(usuario, "cursos") && Convert.ToInt32(SqlData.Scalar("SELECT COUNT(*) FROM dbo.Curso WHERE Id=@CursoId", SqlData.Param("@CursoId", SqlDbType.Int, cursoId))) > 0;
             if (usuario.Rol == "docente") return EsDocenteDelCurso(usuario.Id, cursoId);
             return Convert.ToInt32(SqlData.Scalar("SELECT COUNT(*) FROM dbo.Inscripcion WHERE CursoId=@CursoId AND EstudianteId=@UsuarioId", SqlData.Param("@CursoId", SqlDbType.Int, cursoId), SqlData.Param("@UsuarioId", SqlDbType.Int, usuario.Id))) > 0;
         }

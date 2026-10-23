@@ -1,6 +1,8 @@
 export const funcionalidades = [
-  { id: 'calificaciones', icono: 'bi-journal-check', titulo: 'Calificaciones en vivo', texto: 'Registra calificaciones y consulta cómo se actualiza el promedio del curso.' },
-  { id: 'entregas', icono: 'bi-cloud-arrow-up', titulo: 'Entrega de archivos', texto: 'Organiza tareas, proyectos y exámenes con sus fechas y requisitos de entrega.' },
-  { id: 'asistencia', icono: 'bi-calendar-check', titulo: 'Asistencia por sesión', texto: 'Registra la asistencia de cada clase y consulta el seguimiento del curso.' },
-  { id: 'alertas', icono: 'bi-exclamation-triangle', titulo: 'Seguimiento académico', texto: 'Consulta información de progreso para identificar a tiempo dónde hace falta apoyo.' },
+  { id: 'cursos', icono: 'bi-journal-bookmark', titulo: 'Gestión de cursos', texto: 'Organiza grupos, docentes, matrículas y materiales desde el espacio de cada curso.', imagen: '/funcion-cursos.svg', alt: 'Vista ilustrativa de cursos con grupos y resumen académico' },
+  { id: 'calificaciones', icono: 'bi-journal-check', titulo: 'Calificaciones', texto: 'Registra notas por evaluación y consulta el promedio actualizado de cada curso.', imagen: '/funcion-calificaciones.svg', alt: 'Vista ilustrativa del libro de calificaciones por estudiante' },
+  { id: 'asistencia', icono: 'bi-calendar-check', titulo: 'Asistencia', texto: 'Toma asistencia por sesión y revisa el porcentaje de participación del grupo.', imagen: '/funcion-asistencia.svg', alt: 'Vista ilustrativa de asistencia de un grupo por fecha' },
+  { id: 'entregas', icono: 'bi-cloud-arrow-up', titulo: 'Evaluaciones y entregas', texto: 'Publica actividades, define fechas y recibe archivos con seguimiento de estado.', imagen: '/funcion-entregas.svg', alt: 'Vista ilustrativa de evaluaciones y archivos entregados' },
+  { id: 'materiales', icono: 'bi-folder2-open', titulo: 'Materiales y avisos', texto: 'Comparte recursos de clase y comunica novedades a quienes participan en el curso.', imagen: '/funcion-materiales.svg', alt: 'Vista ilustrativa de materiales de curso y avisos' },
+  { id: 'seguimiento', icono: 'bi-graph-up-arrow', titulo: 'Resumen y seguimiento', texto: 'Consulta actividad, próximos vencimientos y señales de progreso académico.', imagen: '/funcion-resumen.svg', alt: 'Vista ilustrativa del resumen académico con métricas y alertas' },
 ]

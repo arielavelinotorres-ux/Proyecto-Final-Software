@@ -12,7 +12,7 @@ export default function Hero() {
         </p>
         <div className="landing-acciones">
           <Link className="btn btn-landing" to="/ingresar">Ingresar a HomeClass <i className="bi bi-arrow-right" /></Link>
-          <a className="landing-enlace" href="#funcionalidades">Explorar funcionalidades <i className="bi bi-chevron-down" /></a>
+          <Link className="landing-enlace" to="/funciones">Explorar funcionalidades <i className="bi bi-chevron-down" /></Link>
         </div>
         <div className="landing-resumen" aria-label="Áreas que integra HomeClass">
           <span><i className="bi bi-journal-check" /> Cursos</span>

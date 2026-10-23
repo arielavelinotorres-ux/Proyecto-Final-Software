@@ -22,6 +22,12 @@ namespace HomeClassApi.Models
         public string Nueva { get; set; }
     }
 
+    public class RestablecerClaveRequest
+    {
+        [Required]
+        public string Nueva { get; set; }
+    }
+
     public class UsuarioRespuesta
     {
         public int Id { get; set; }
@@ -29,6 +35,10 @@ namespace HomeClassApi.Models
         public string Correo { get; set; }
         public string Rol { get; set; }
         public bool Activo { get; set; }
+        public bool Bloqueado { get; set; }
+        public bool SolicitudRestablecimiento { get; set; }
+        public string TipoAdmin { get; set; }
+        public List<string> PermisosAdmin { get; set; }
     }
 
     public class UsuarioSeed
@@ -39,6 +49,11 @@ namespace HomeClassApi.Models
         public string ClaveHash { get; set; }
         public string Rol { get; set; }
         public bool Activo { get; set; }
+        public int IntentosFallidos { get; set; }
+        public bool Bloqueado { get; set; }
+        public bool SolicitudRestablecimiento { get; set; }
+        public string TipoAdmin { get; set; }
+        public string PermisosAdminCsv { get; set; }
     }
 
     public class UsuarioRequest
@@ -46,6 +61,8 @@ namespace HomeClassApi.Models
         public string Nombre { get; set; }
         public string Correo { get; set; }
         public string Rol { get; set; }
+        public string TipoAdmin { get; set; }
+        public List<string> PermisosAdmin { get; set; }
         public string Clave { get; set; }
         public bool Activo { get; set; }
     }

@@ -17,9 +17,10 @@ Backend ASP.NET Web API para la app del frontend `Frontend`.
 ## Ejecutar
 
 1. Ejecutar `DB/Base web.sql` en una instancia local de SQL Server.
-2. Si la instancia no es `localhost`/`.`, ajustar la cadena `HomeClassDb` de `Web.config`.
-3. Abrir el proyecto en Visual Studio, seleccionar `HomeClassApi` como inicio y presionar `F5`.
-4. El backend queda en `http://localhost:5000`; el frontend lo consume mediante el proxy de Vite.
+2. Ejecutar `DB/script/seguridad-cuentas.sql` en esa misma base para habilitar el bloqueo después de cinco intentos fallidos, solicitudes de restablecimiento y perfiles de administración por módulo.
+3. Si la instancia no es `localhost`/`.`, ajustar la cadena `HomeClassDb` de `Web.config`.
+4. Abrir el proyecto en Visual Studio, seleccionar `HomeClassApi` como inicio y presionar `F5`.
+5. El backend queda en `http://localhost:5000`; el frontend lo consume mediante el proxy de Vite.
 
 ## Credenciales demo
 

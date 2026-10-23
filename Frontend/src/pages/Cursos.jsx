@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/index.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAviso } from '../context/ToastContext.jsx'
+import { tienePermisoAdmin } from '../utils/permisos.js'
 import useAsync from '../hooks/useAsync.js'
 import { BadgeRiesgo, Cargando, Confirmar, Encabezado, ErrorCaja, Modal, Vacio } from '../components/ui.jsx'
 import { num } from '../utils/formato.js'
@@ -16,6 +17,9 @@ export default function Cursos() {
   const [aEliminar, setAEliminar] = useState(null)
   const [ocupado, setOcupado] = useState(false)
   const esAdmin = usuario.rol === 'admin'
+  const puedeCrear = tienePermisoAdmin(usuario, 'cursos.crear')
+  const puedeEditar = tienePermisoAdmin(usuario, 'cursos.editar')
+  const puedeEliminar = tienePermisoAdmin(usuario, 'cursos.eliminar')
 
   async function eliminar() {
     setOcupado(true)
@@ -29,8 +33,8 @@ export default function Cursos() {
 
   return (
     <>
-      <Encabezado titulo={esAdmin ? 'Cursos' : 'Mis cursos'} subtitulo={esAdmin ? 'Crea cursos, asigna docentes y matricula estudiantes.' : undefined}>
-        {esAdmin && <button type="button" className="btn btn-primario" onClick={() => setEditando({})}><i className="bi bi-plus-lg" /> Nuevo curso</button>}
+      <Encabezado titulo={esAdmin ? 'Cursos' : 'Mis cursos'} subtitulo={esAdmin ? 'Gestiona los cursos según las capacidades asignadas.' : undefined}>
+        {puedeCrear && <button type="button" className="btn btn-primario" onClick={() => setEditando({})}><i className="bi bi-plus-lg" /> Nuevo curso</button>}
       </Encabezado>
 
       {cargando && <Cargando />}
@@ -54,18 +58,35 @@ export default function Cursos() {
             </dl>
             <div className="acciones-linea">
               <Link className="btn btn-claro" to={`/app/cursos/${c.id}`}>Abrir</Link>
-              {esAdmin && (
+              {esAdmin && (puedeEditar || puedeEliminar) && (
                 <>
-                  <button type="button" className="btn btn-claro" onClick={() => setEditando(c)}>Editar</button>
-                  <button type="button" className="btn btn-peligro-claro" onClick={() => setAEliminar(c)} aria-label={`Eliminar ${c.nombre}`}><i className="bi bi-trash" /></button>
+                  {puedeEditar && <button type="button" className="btn btn-claro" onClick={() => setEditando(c)}>Editar</button>}
+                  {puedeEliminar && <button type="button" className="btn btn-peligro-claro" onClick={() => setAEliminar(c)} aria-label={`Eliminar ${c.nombre}`}><i className="bi bi-trash" /></button>}
                 </>
               )}
             </div>
+            {!esAdmin && <details className="atajos-curso">
+              <summary><i className="bi bi-lightning-charge" /> Accesos rápidos</summary>
+              <div className="atajos-curso-enlaces">
+                {usuario.rol === 'docente' ? <>
+                  <Link to={`/app/cursos/${c.id}?seccion=notas`}><i className="bi bi-journal-check" /> Calificaciones</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=asistencia`}><i className="bi bi-calendar-check" /> Asistencia</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=evaluaciones`}><i className="bi bi-clipboard2-check" /> Evaluaciones</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=entregas`}><i className="bi bi-inbox" /> Entregas</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=materiales`}><i className="bi bi-folder2-open" /> Materiales</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=avisos`}><i className="bi bi-megaphone" /> Avisos</Link>
+                </> : <>
+                  <Link to={`/app/cursos/${c.id}?seccion=evaluaciones`}><i className="bi bi-journal-check" /> Evaluaciones</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=materiales`}><i className="bi bi-folder2-open" /> Materiales</Link>
+                  <Link to={`/app/cursos/${c.id}?seccion=avisos`}><i className="bi bi-megaphone" /> Avisos</Link>
+                </>}
+              </div>
+            </details>}
           </article>
         ))}
       </div>
 
-      {esAdmin && <FormularioCurso curso={editando} alCerrar={() => setEditando(null)} alGuardar={() => { setEditando(null); recargar() }} />}
+      {esAdmin && (puedeCrear || puedeEditar) && <FormularioCurso curso={editando} alCerrar={() => setEditando(null)} alGuardar={() => { setEditando(null); recargar() }} />}
       <Confirmar
         abierto={!!aEliminar}
         titulo="Eliminar curso"

@@ -29,6 +29,8 @@ namespace HomeClassApi.Controllers
             {
                 return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
             }
+            if (usuarioActual.Rol == "admin" && !AuthService.TienePermisoAdmin(usuarioActual, "cursos") && !AuthService.TienePermisoAdmin(usuarioActual, "reportes"))
+                return Error(HttpStatusCode.Forbidden, "No tienes permiso para consultar cursos.");
 
             return Ok(AuthService.ObtenerCursos(usuarioActual.Rol, usuarioActual.Id));
         }
@@ -42,6 +44,8 @@ namespace HomeClassApi.Controllers
             {
                 return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
             }
+            if (usuarioActual.Rol == "admin" && !AuthService.TienePermisoAdmin(usuarioActual, "cursos"))
+                return Error(HttpStatusCode.Forbidden, "No tienes permiso para consultar cursos.");
 
             if (!TieneAcceso(usuarioActual.Rol, usuarioActual.Id, id))
             {
@@ -66,7 +70,7 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo el administrador puede crear cursos.");
+            if (!AuthService.TienePermisoAdmin(actual, "cursos.crear")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para crear cursos.");
             var error = ValidarCurso(curso);
             if (error != null) return Error(HttpStatusCode.BadRequest, error);
             try
@@ -89,7 +93,7 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo el administrador puede editar cursos.");
+            if (!AuthService.TienePermisoAdmin(actual, "cursos.editar")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para editar cursos.");
             var error = ValidarCurso(curso);
             if (error != null) return Error(HttpStatusCode.BadRequest, error);
             try
@@ -112,7 +116,7 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo el administrador puede eliminar cursos.");
+            if (!AuthService.TienePermisoAdmin(actual, "cursos.eliminar")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para eliminar cursos.");
             var archivos = SqlData.Query("SELECT RutaInterna AS ruta FROM dbo.Material WHERE CursoId=@Id UNION ALL SELECT en.RutaInterna AS ruta FROM dbo.Entrega en JOIN dbo.Evaluacion e ON e.Id=en.EvaluacionId WHERE e.CursoId=@Id",
                 SqlData.Param("@Id", SqlDbType.Int, id));
             var count = SqlData.Execute("DELETE FROM dbo.Curso WHERE Id=@Id", SqlData.Param("@Id", SqlDbType.Int, id));
@@ -128,7 +132,7 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo el administrador puede matricular estudiantes.");
+            if (!AuthService.TienePermisoAdmin(actual, "cursos.matricular")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para matricular estudiantes.");
             if (request == null || !ExisteCurso(id)) return Error(HttpStatusCode.NotFound, "Curso no encontrado.");
             var estudiante = AuthService.ObtenerPorId(request.EstudianteId);
             if (estudiante == null || estudiante.Rol != "estudiante" || !estudiante.Activo)
@@ -152,7 +156,7 @@ namespace HomeClassApi.Controllers
         {
             var actual = AuthController.ObtenerUsuarioActual();
             if (actual == null) return Error(HttpStatusCode.Unauthorized, "Tu sesión expiró. Ingresa de nuevo.");
-            if (actual.Rol != "admin") return Error(HttpStatusCode.Forbidden, "Solo el administrador puede retirar estudiantes.");
+            if (!AuthService.TienePermisoAdmin(actual, "cursos.matricular")) return Error(HttpStatusCode.Forbidden, "No tienes permiso para gestionar matrículas.");
             var existe = Convert.ToInt32(SqlData.Scalar("SELECT COUNT(*) FROM dbo.Inscripcion WHERE CursoId=@CursoId AND EstudianteId=@EstudianteId",
                 SqlData.Param("@CursoId", SqlDbType.Int, id), SqlData.Param("@EstudianteId", SqlDbType.Int, estudianteId))) > 0;
             if (!existe) return Error(HttpStatusCode.NotFound, "La matrícula no existe.");

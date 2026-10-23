@@ -34,9 +34,13 @@ namespace HomeClassApi.Controllers
                 return Error(HttpStatusCode.Forbidden, "Tu cuenta está desactivada. Contacta al administrador.");
             }
 
-            var usuario = AuthService.ValidarLogin(request.Correo, request.Clave);
+            var usuario = AuthService.ValidarLogin(request.Correo, request.Clave, out var bloqueado);
             if (usuario == null)
             {
+                if (bloqueado)
+                {
+                    return Error(HttpStatusCode.Forbidden, "Tu cuenta se bloqueó después de cinco intentos fallidos. Debes restablecer tu contraseña con el administrador.");
+                }
                 return Error(HttpStatusCode.Unauthorized, "Correo o contraseña incorrectos.");
             }
 
@@ -51,6 +55,19 @@ namespace HomeClassApi.Controllers
                 token,
                 usuario = usuario
             });
+        }
+
+        [HttpPost]
+        [Route("solicitar-restablecimiento")]
+        public IHttpActionResult SolicitarRestablecimiento(LoginRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Correo))
+            {
+                return Error(HttpStatusCode.BadRequest, "Ingresa el correo de tu cuenta.");
+            }
+
+            AuthService.SolicitarRestablecimiento(request.Correo);
+            return Ok(new { mensaje = "Si la cuenta corresponde a un estudiante o docente, la solicitud fue enviada al administrador." });
         }
 
         [HttpGet]
@@ -84,7 +101,7 @@ namespace HomeClassApi.Controllers
                 if (Tokens.TryGetValue(token, out var usuario))
                 {
                     var vigente = AuthService.ObtenerPorId(usuario.Id);
-                    if (vigente == null || !vigente.Activo)
+                    if (vigente == null || !vigente.Activo || vigente.Bloqueado)
                     {
                         Tokens.Remove(token);
                         return null;
