@@ -1,77 +1,27 @@
-# HomeClass · Entorno Académico (Frontend)
+# HomeClass · Frontend
 
-Aplicación web en **React + Vite** para organizar cursos y dar seguimiento académico a instituciones educativas.
-Los datos persistentes se consultan y modifican mediante la API HTTP documentada en `docs/API.md`, implementada
-en `Backend/HomeClassApi` con ASP.NET Web API y SQL Server.
+Aplicación React + Vite. Toda lectura y escritura persistente pasa por la API ASP.NET en `Backend/HomeClassApi`; el navegador nunca se conecta directamente a SQL Server.
 
-## Cómo correrlo
+## Funciones conectadas
 
-Requisito: Node.js 18 o superior (https://nodejs.org).
+- Inicio de sesión con usuarios y sesiones almacenados en `lms_db`.
+- Consulta de categorías, subcategorías, cursos y matrículas.
+- Administración de cursos y catálogo según el rol.
+- Consulta del contenido del curso, foros, publicaciones y mensajes privados.
+
+La interfaz solo muestra operaciones que están representadas por los esquemas y procedimientos SQL existentes. Los scripts de esta base no contienen tablas para asistencia, calificaciones ni una entidad de evaluación completa, por lo que esas pantallas no se presentan como funcionales.
+
+## Ejecutar
+
+Requisito: Node.js 18 o superior.
 
 ```bash
 cd Frontend
-npm install
-npm run dev        # abre http://localhost:5173
-npm run build      # genera la carpeta dist/ para publicar
+npm ci
+npm run dev
+npm run build
 ```
 
-## Qué puede hacer cada rol
+En desarrollo, Vite reenvía `/api` a `http://localhost:5000`. Para cambiarlo, copia `.env.example` como `.env` y ajusta `VITE_PROXY`. `VITE_API_URL` puede cambiar la ruta base de la API. La configuración de SQL Server solo existe en el backend.
 
-| Rol | Funciones |
-|---|---|
-| **Administración** | Resumen institucional (balance, riesgo, promedios). Usuarios: crear, editar, activar/desactivar, eliminar. Cursos: crear, editar, eliminar, asignar docente, matricular y quitar estudiantes. |
-| **Docente** | Resumen con alertas de estudiantes en riesgo, próximas evaluaciones y entregas por revisar. Por curso: **calificaciones** (libro con promedio ponderado en vivo), **asistencia** por sesión, **evaluaciones** (tarea, proyecto, examen: peso, fecha, instrucciones y si piden archivo con tipos y tamaño permitidos), **entregas** (descarga y califica), **materiales** (sube archivos). |
-| **Estudiante** | Resumen con su promedio, asistencia y entregas pendientes. Por curso: sus notas, promedio del grupo, **sube / reemplaza / retira su entrega** con validación de tipo y tamaño, descarga materiales. |
-
-Reglas del dominio (las mismas del proyecto ASP.NET):
-- Promedio ponderado de lo ya calificado: `Σ(nota × peso) / Σ(peso calificado)`.
-- Riesgo **alto**: promedio < 70 o asistencia < 75. **Moderado**: promedio < 80 o asistencia < 85.
-- La suma de pesos de un curso no puede pasar de 100%.
-- Una entrega calificada ya no se puede cambiar ni retirar; las entregas tardías solo se aceptan si la evaluación lo permite.
-
-## Estructura
-
-```
-Frontend/
-├── index.html
-├── package.json · vite.config.js · .env.example
-├── docs/API.md            ← contrato para el backend y la base de datos
-└── src/
-    ├── main.jsx · App.jsx          arranque y rutas
-    ├── config.js                   configuración de API y reglas de archivos
-    ├── api/
-    │   ├── index.js                ÚNICO punto de acceso a datos: import { api } from '../api'
-    │   ├── http.js                 implementación REAL (fetch al backend)
-    │   ├── sesion.js               token de sesión
-    ├── context/                    AuthContext (sesión) y ToastContext (avisos)
-    ├── hooks/                      useAsync (cargar datos), useTheme (claro/oscuro)
-    ├── utils/                      calculos (reglas), formato, archivos (validación)
-    ├── layouts/                    PublicLayout y AppLayout (menú lateral por rol)
-    ├── components/                 ui.jsx (Modal, Tabs, Badge, BarList…), SelectorArchivo…
-    └── pages/
-        ├── Inicio · Ingresar · Resumen · Cursos · CursoDetalle · Perfil
-        ├── admin/      Usuarios, CursoAdmin
-        ├── docente/    CursoDocente, Libro, Asistencia, Evaluaciones, Entregas, Materiales
-        └── estudiante/ CursoEstudiante
-```
-
-## Conexión con el backend
-
-1. Copia `.env.example` como `.env` y configura:
-   ```
-   VITE_API_URL=/api
-   VITE_PROXY=http://localhost:5000      # dirección del backend en desarrollo
-   ```
-2. Ejecuta el script `DB/Base web.sql` en SQL Server.
-3. Configura la cadena `HomeClassDb` en `Backend/HomeClassApi/Web.config` si SQL Server no está en `.`.
-4. Inicia `HomeClassApi` en Visual Studio y luego `npm run dev` en esta carpeta.
-5. `src/api/http.js` consume las rutas documentadas en `docs/API.md`; Vite reenvía `/api` a `localhost:5000`.
-
-Reglas que el backend debe aplicar sí o sí (el frontend solo las valida para dar mensajes rápidos):
-autenticación y permisos por rol y por curso, validación de tipo/tamaño de archivo, que los archivos se
-guarden **fuera de la carpeta pública** con nombre aleatorio, y descargas solo a quien corresponda.
-
-## Seguridad
-
-- El login requiere un backend que devuelva un token; el frontend lo envía en `Authorization: Bearer`.
-- Los textos se muestran con React, que escapa el HTML por defecto (no usar `dangerouslySetInnerHTML`).
+Inicia la API desde Visual Studio siguiendo [Backend/HomeClassApi/README.md](../Backend/HomeClassApi/README.md). Debe estar conectada a la base existente `lms_db`.

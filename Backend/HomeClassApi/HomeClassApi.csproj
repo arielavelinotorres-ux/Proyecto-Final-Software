@@ -13,6 +13,7 @@
     <RootNamespace>HomeClassApi</RootNamespace>
     <AssemblyName>HomeClassApi</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkRootPath>$(MSBuildThisFileDirectory)packages\Microsoft.NETFramework.ReferenceAssemblies.net48.1.0.3\build\</TargetFrameworkRootPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,19 +55,13 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>packages\Newtonsoft.Json.13.0.2\lib\netstandard2.0\Newtonsoft.Json.dll</HintPath>
+      <HintPath>packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\AuthController.cs" />
-    <Compile Include="Controllers\DashboardController.cs" />
-    <Compile Include="Controllers\UsuariosController.cs" />
-    <Compile Include="Controllers\CursosController.cs" />
-    <Compile Include="Controllers\PerfilController.cs" />
-    <Compile Include="Controllers\AcademicoController.cs" />
-    <Compile Include="Controllers\ComunicacionController.cs" />
-    <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Controllers\LmsController.cs" />
     <Compile Include="Global.asax.cs" />
     <Compile Include="Models\AuthModels.cs" />
     <Compile Include="Services\AuthService.cs" />
@@ -76,6 +71,8 @@
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
+  <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net48.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net48.targets"
+          Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net48.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net48.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.CSharp.targets')" />
   <ProjectExtensions>
     <VisualStudio>

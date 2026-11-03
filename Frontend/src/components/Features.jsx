@@ -4,9 +4,9 @@ export default function Features() {
   return (
     <section className="landing-seccion" id="funcionalidades" aria-labelledby="titulo-func">
       <div className="landing-seccion-cabecera">
-        <p className="landing-eyebrow">Una plataforma, tareas conectadas</p>
-        <h2 id="titulo-func">Todo lo necesario para acompañar el aprendizaje.</h2>
-        <p>Herramientas prácticas para organizar el trabajo académico y tener una visión más completa de cada curso.</p>
+        <p className="landing-eyebrow">Funciones conectadas al backend</p>
+        <h2 id="titulo-func">Catálogo, contenido y comunicación.</h2>
+        <p>Estas operaciones se guardan en la base de datos mediante la API del backend.</p>
       </div>
       <div className="landing-funciones">
         {funcionalidades.map((f) => (

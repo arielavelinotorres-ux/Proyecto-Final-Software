@@ -30,7 +30,7 @@ export function GestionesPage() {
 }
 
 export function FuncionesPage() {
-  return <PaginaPublica etiqueta="Funcionalidades" titulo="El trabajo del curso, en un solo espacio." descripcion="Explora las herramientas para organizar cursos, registrar actividad y acompañar el progreso académico."><Features /></PaginaPublica>
+  return <PaginaPublica etiqueta="Funcionalidades" titulo="El trabajo del curso, en un solo espacio." descripcion="Explora las herramientas conectadas al catálogo, contenido y comunicación que ofrece la base de datos actual."><Features /></PaginaPublica>
 }
 
 export function ContactoPage() {

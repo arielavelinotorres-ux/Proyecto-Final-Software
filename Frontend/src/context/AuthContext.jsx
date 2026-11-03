@@ -28,9 +28,12 @@ export function AuthProvider({ children }) {
   }, [])
 
   const salir = useCallback(async () => {
-    await api.auth.salir()
-    borrarToken()
-    setUsuario(null)
+    try {
+      await api.auth.salir()
+    } finally {
+      borrarToken()
+      setUsuario(null)
+    }
   }, [])
 
   const valor = useMemo(() => ({ usuario, cargando, ingresar, salir, setUsuario }), [usuario, cargando, ingresar, salir])

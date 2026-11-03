@@ -71,9 +71,11 @@ namespace HomeClassApi.Models
     {
         public string Codigo { get; set; }
         public string Nombre { get; set; }
-        public string Periodo { get; set; }
         public string Descripcion { get; set; }
         public int? DocenteId { get; set; }
+        public int? SubcategoriaId { get; set; }
+        public string ImagenPortada { get; set; }
+        public string Estado { get; set; }
     }
 
     public class MatriculaRequest
@@ -135,5 +137,50 @@ namespace HomeClassApi.Models
     {
         public string Titulo { get; set; }
         public string Mensaje { get; set; }
+    }
+
+    public class CategoriaRequest
+    {
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public bool Activo { get; set; }
+    }
+
+    public class SubcategoriaRequest
+    {
+        public int CategoriaId { get; set; }
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public bool Activo { get; set; }
+    }
+
+    public class PublicacionForoRequest
+    {
+        public string Contenido { get; set; }
+        public int? PublicacionPadreId { get; set; }
+    }
+
+    public class MensajePrivadoRequest
+    {
+        public int ReceptorId { get; set; }
+        public string Asunto { get; set; }
+        public string Contenido { get; set; }
+    }
+
+    public class ProgresoLeccionRequest
+    {
+        public bool Completado { get; set; }
+    }
+
+    public class EstadoMatriculaRequest
+    {
+        public string Estado { get; set; }
+    }
+
+    public class ForoRequest
+    {
+        public string Titulo { get; set; }
+        public string Descripcion { get; set; }
+        public string Estado { get; set; }
     }
 }
