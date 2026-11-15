@@ -2,7 +2,7 @@ USE lms_db
 GO
 
 
--- SP para Insertar Token de Recuperación
+-- SP para Insertar Token de Recuperación - MODIFICADO
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_InsertarTokenRecuperacion
     @usuario_id INT,
@@ -13,6 +13,14 @@ BEGIN
     SET NOCOUNT ON;
 
     BEGIN TRY
+        -- Desactiva cualquier token previo que no se haya usado
+
+        UPDATE Usuarios.recuperacion_passwords
+        SET usado = 1
+        WHERE usuario_id = @usuario_id AND usado = 0;
+
+        -- Inserta el nuevo token
+
         INSERT INTO Usuarios.recuperacion_passwords (usuario_id, token_hash, expira_en, usado)
         OUTPUT INSERTED.id
         VALUES (@usuario_id, @token_hash, @expira_en, 0);
@@ -25,7 +33,10 @@ BEGIN
 END;
 GO
 
--- SP para Validar Token de Recuperación
+
+
+-- SP para Validar Token de Recuperación - MODIFICADO
+
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_ValidarTokenRecuperacion
     @token_hash NVARCHAR(255)
@@ -34,7 +45,6 @@ BEGIN
     SET NOCOUNT ON;
 
     BEGIN TRY
-        -- Devuelve el registro si el token existe, no ha sido usado y no ha expirado
         SELECT id, usuario_id, expira_en, usado
         FROM Usuarios.recuperacion_passwords
         WHERE token_hash = @token_hash 
@@ -43,12 +53,14 @@ BEGIN
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
-        ;THROW 50002, 'Falló al validar el token de recuperación.', 1;
+        DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al validar el token. Detalle: ' + @DetalleError;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
 
--- SP para marcar Token como Usado
+
+-- SP para marcar Token como Usado - MODIFICADO
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_MarcarTokenUsado
     @id INT
@@ -59,12 +71,10 @@ BEGIN
     BEGIN TRY
         UPDATE Usuarios.recuperacion_passwords
         SET usado = 1
-        WHERE id = @id;
+        WHERE id = @id AND usado = 0; -- Si le dan doble clic al enlace de React, esto nos protege
 
         IF @@ROWCOUNT = 0
-        BEGIN
-            ;THROW 50003, 'Error: El token que intenta actualizar no existe.', 1;
-        END
+            BEGIN ;THROW 50003, 'Error: El token ya fue usado o no existe.', 1; END
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();

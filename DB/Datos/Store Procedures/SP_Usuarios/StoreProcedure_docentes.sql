@@ -1,7 +1,7 @@
 USE lms_db
 GO
 
--- SP PARA INSERTAR DOCENTE
+-- SP PARA INSERTAR DOCENTE - MODIFICADO
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_InsertarDocente
     @usuario_id INT,
@@ -16,10 +16,13 @@ BEGIN
     SET NOCOUNT ON;
 
     IF LTRIM(RTRIM(@nombre)) = '' OR @nombre IS NULL OR LTRIM(RTRIM(@apellido)) = '' OR @apellido IS NULL
-    BEGIN
-        ;THROW 50001, 'Error: El nombre y apellido son obligatorios.', 1;
-        RETURN;
-    END
+        BEGIN ;THROW 50001, 'Error: El nombre y apellido son obligatorios.', 1; RETURN; END
+
+    IF EXISTS (SELECT 1 FROM Usuarios.docentes WHERE usuario_id = @usuario_id)
+        BEGIN ;THROW 50001, 'Error: Este usuario ya tiene un perfil de docente.', 1; RETURN; END
+
+    IF @codigo_docente IS NOT NULL AND EXISTS (SELECT 1 FROM Usuarios.docentes WHERE codigo_docente = @codigo_docente)
+        BEGIN ;THROW 50001, 'Error: El código de docente ya está en uso.', 1; RETURN; END
 
     BEGIN TRY
         INSERT INTO Usuarios.docentes (usuario_id, codigo_docente, nombre, apellido, especialidad, telefono, biografia, creado_en)
@@ -34,7 +37,9 @@ BEGIN
 END;
 GO
 
--- SP PARA ACTUALIZAR DOCENTES
+
+-- SP PARA ACTUALIZAR DOCENTES - MODIFICADO
+
 CREATE OR ALTER PROCEDURE Usuarios.SP_ActualizarDocente
     @id INT,
     @codigo_docente NVARCHAR(50),
@@ -47,26 +52,20 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF LTRIM(RTRIM(@nombre)) = '' OR LTRIM(RTRIM(@apellido)) = ''
-    BEGIN
-        ;THROW 50001, 'Error: El nombre y apellido no pueden estar vacíos.', 1;
-        RETURN;
-    END
+    IF LTRIM(RTRIM(@nombre)) = '' OR @nombre IS NULL OR LTRIM(RTRIM(@apellido)) = '' OR @apellido IS NULL
+        BEGIN ;THROW 50001, 'Error: El nombre y apellido no pueden estar vacíos.', 1; RETURN; END
+
+    IF @codigo_docente IS NOT NULL AND EXISTS (SELECT 1 FROM Usuarios.docentes WHERE codigo_docente = @codigo_docente AND id <> @id)
+        BEGIN ;THROW 50001, 'Error: El código de docente ya está en uso por otro perfil.', 1; RETURN; END
 
     BEGIN TRY
         UPDATE Usuarios.docentes
-        SET codigo_docente = @codigo_docente,
-            nombre = @nombre,
-            apellido = @apellido,
-            especialidad = @especialidad,
-            telefono = @telefono,
-            biografia = @biografia
+        SET codigo_docente = @codigo_docente, nombre = @nombre, apellido = @apellido,
+            especialidad = @especialidad, telefono = @telefono, biografia = @biografia
         WHERE id = @id;
 
         IF @@ROWCOUNT = 0
-        BEGIN
-            ;THROW 50003, 'Error: El docente que intenta actualizar no existe.', 1;
-        END
+            BEGIN ;THROW 50003, 'Error: El docente que intenta actualizar no existe.', 1; END
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
@@ -76,22 +75,19 @@ BEGIN
 END;
 GO
 
---  SP PARA Eliminar Docente (Borrado físico)
+    
+
+--  SP PARA Eliminar Docente (Borrado físico) - MODIFICADO
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_EliminarDocente
     @id INT
 AS
 BEGIN
     SET NOCOUNT ON;
-
     BEGIN TRY
-        DELETE FROM Usuarios.docentes
-        WHERE id = @id;
-
+        DELETE FROM Usuarios.docentes WHERE id = @id;
         IF @@ROWCOUNT = 0
-        BEGIN
-            ;THROW 50003, 'Error: El docente que intenta eliminar no existe.', 1;
-        END
+            BEGIN ;THROW 50003, 'Error: El docente que intenta eliminar no existe.', 1; END
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
@@ -101,21 +97,22 @@ BEGIN
 END;
 GO
 
--- SP PARA Listar Docentes
+
+
+-- SP PARA Listar Docentes - MODIFICADO
 
 CREATE OR ALTER PROCEDURE Usuarios.SP_ListarDocentes
 AS
 BEGIN
     SET NOCOUNT ON;
-
     BEGIN TRY
         SELECT id, usuario_id, codigo_docente, nombre, apellido, especialidad, telefono, biografia, creado_en
-        FROM Usuarios.docentes
-        ORDER BY apellido ASC, nombre ASC;
+        FROM Usuarios.docentes ORDER BY apellido ASC, nombre ASC;
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
-        ;THROW 50002, 'Falló al listar docentes.', 1;
+        DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al listar docentes. Detalle: ' + @DetalleError;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
