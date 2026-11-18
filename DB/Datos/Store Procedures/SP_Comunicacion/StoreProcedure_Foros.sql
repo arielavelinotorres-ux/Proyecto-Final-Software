@@ -2,13 +2,13 @@ USE lms_db
 GO
 
 
--- SP para listar Foros Activos por Curso (MODIFICADO)
+-- SP para listar Foros Activos por Curso (MODIFICADO 17/11/26)
+
 CREATE OR ALTER PROCEDURE Comunicacion.SP_ListarForos
     @curso_id INT
 AS
 BEGIN
     SET NOCOUNT ON;
-
     BEGIN TRY
         SELECT id, curso_id, titulo, descripcion, estado, creado_en 
         FROM Comunicacion.foros 
@@ -18,16 +18,15 @@ BEGIN
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al listar los foros. Detalle: ' + @DetalleError;
-        ;THROW 50003, @MensajeFinal, 1;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
 
 
-
 -- SP para la inserccion de foros (Modificado seguimiento de las instrucciones dadas por el Ing. Evelio)
 
- CREATE OR ALTER PROCEDURE Comunicacion.SP_InsertarForo
+CREATE OR ALTER PROCEDURE Comunicacion.SP_InsertarForo
     @curso_id INT,
     @titulo NVARCHAR(150),
     @descripcion NVARCHAR(MAX)
@@ -36,10 +35,7 @@ BEGIN
     SET NOCOUNT ON;
 
     IF LTRIM(RTRIM(@titulo)) = '' OR @titulo IS NULL
-    BEGIN
-        ;THROW 50001, 'Error: El título del foro no puede estar vacío.', 1;
-        RETURN;
-    END
+        BEGIN ;THROW 50001, 'Error: El título del foro no puede estar vacío.', 1; RETURN; END
 
     BEGIN TRY
         INSERT INTO Comunicacion.foros (curso_id, titulo, descripcion, estado, creado_en)
@@ -49,7 +45,7 @@ BEGIN
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al insertar foro. Detalle: ' + @DetalleError;
-        ;THROW 50003, @MensajeFinal, 1;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
@@ -68,55 +64,45 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF LTRIM(RTRIM(@titulo)) = '' OR @titulo IS NULL
+        BEGIN ;THROW 50001, 'Error: El título del foro no puede estar vacío.', 1; RETURN; END
+
     IF @estado NOT IN ('Abierto', 'Cerrado', 'Archivado')
-    BEGIN
-        ;THROW 50004, 'Error: Estado inválido. Solo se permite Abierto, Cerrado o Archivado.', 1;
-        RETURN;
-    END
+        BEGIN ;THROW 50001, 'Error: Estado inválido. Solo se permite Abierto, Cerrado o Archivado.', 1; RETURN; END
 
     BEGIN TRY
         UPDATE Comunicacion.foros
-        SET titulo = @titulo,
-            descripcion = @descripcion,
-            estado = @estado
+        SET titulo = @titulo, descripcion = @descripcion, estado = @estado
         WHERE id = @id;
 
         IF @@ROWCOUNT = 0
-        BEGIN
-            ;THROW 50005, 'Error: El foro que intenta actualizar no existe.', 1;
-        END
+            BEGIN ;THROW 50003, 'Error: El foro que intenta actualizar no existe.', 1; END
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al actualizar foro. Detalle: ' + @DetalleError;
-        ;THROW 50003, @MensajeFinal, 1;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
 
 
-
 -- SP de desactivar Foro (Usando borrado logico)
+
 CREATE OR ALTER PROCEDURE Comunicacion.SP_DesactivarForo
     @id INT
 AS
 BEGIN
     SET NOCOUNT ON;
-
     BEGIN TRY
-        UPDATE Comunicacion.foros
-        SET estado = 'Archivado'
-        WHERE id = @id;
-
+        UPDATE Comunicacion.foros SET estado = 'Archivado' WHERE id = @id;
         IF @@ROWCOUNT = 0
-        BEGIN
-            ;THROW 50005, 'Error: El foro que intenta archivar no existe.', 1;
-        END
+            BEGIN ;THROW 50003, 'Error: El foro que intenta archivar no existe.', 1; END
     END TRY
     BEGIN CATCH
         DECLARE @DetalleError NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @MensajeFinal NVARCHAR(4000) = 'Falló al desactivar foro. Detalle: ' + @DetalleError;
-        ;THROW 50003, @MensajeFinal, 1;
+        ;THROW 50002, @MensajeFinal, 1;
     END CATCH
 END;
 GO
