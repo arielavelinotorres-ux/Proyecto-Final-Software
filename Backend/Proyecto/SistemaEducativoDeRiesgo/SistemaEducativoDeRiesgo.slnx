@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../SistemaEducativoDeRiesgo.Application/SistemaEducativoDeRiesgo.Application.csproj" />
+  <Project Path="../SistemaEducativoDeRiesgo.Domain/SistemaEducativoDeRiesgo.Domain.csproj" />
+  <Project Path="../SistemaEducativoDeRiesgo.Insfrasctuture/SistemaEducativoDeRiesgo.Insfrasctuture.csproj" />
+  <Project Path="../SistemaEducativoDeRiesgo.Tests/SistemaEducativoDeRiesgo.Tests.csproj" />
+  <Project Path="SistemaEducativoDeRiesgo.Web.Api.csproj" />
+</Solution>

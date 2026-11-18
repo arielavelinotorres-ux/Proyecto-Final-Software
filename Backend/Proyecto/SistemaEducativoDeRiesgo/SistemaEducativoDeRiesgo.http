@@ -1,0 +1,11 @@
+@SistemaEducativoDeRiesgo_HostAddress = http://localhost:5296
+
+GET {{SistemaEducativoDeRiesgo_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{SistemaEducativoDeRiesgo_HostAddress}}/todos/1
+Accept: application/json
+
+###
