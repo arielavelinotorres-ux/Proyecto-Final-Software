@@ -1,62 +1,51 @@
 USE lms_db
 GO
 
---1
-CREATE PROCEDURE Configuracion.sp_InsertarAuditoriaConfiguracion
+
+
+-- 1. Insertar Registro de Auditoría
+CREATE OR ALTER PROCEDURE Configuracion.sp_InsertarAuditoriaConfiguracion
     @parametro_id INT,
     @usuario_id INT,
     @valor_anterior NVARCHAR(MAX) = NULL,
     @valor_nuevo NVARCHAR(MAX)
 AS
 BEGIN
-    INSERT INTO Configuracion.auditoria_configuraciones (parametro_id, usuario_id, valor_anterior, valor_nuevo)
-    VALUES (@parametro_id, @usuario_id, @valor_anterior, @valor_nuevo);
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        INSERT INTO Configuracion.auditoria_configuraciones (parametro_id, usuario_id, valor_anterior, valor_nuevo)
+        OUTPUT INSERTED.id AS auditoria_id
+        VALUES (@parametro_id, @usuario_id, @valor_anterior, @valor_nuevo);
+    END TRY
+    BEGIN CATCH
+        ;THROW;
+    END CATCH
 END;
 GO
 
--- 2.
-CREATE PROCEDURE Configuracion.sp_ConsultarAuditoriaConfiguraciones
+--------------------------------------------------------------------
+
+-- 2. Consultar Registros de Auditoría (con JOINS y ordenados del más reciente al más antiguo)
+CREATE OR ALTER PROCEDURE Configuracion.sp_ConsultarAuditoriaConfiguraciones
     @id INT = NULL
 AS
 BEGIN
-    IF @id IS NULL
-    BEGIN
-        SELECT id, parametro_id, usuario_id, valor_anterior, valor_nuevo, fecha_cambio 
-        FROM Configuracion.auditoria_configuraciones;
-    END
-    ELSE
-    BEGIN
-        SELECT id, parametro_id, usuario_id, valor_anterior, valor_nuevo, fecha_cambio 
-        FROM Configuracion.auditoria_configuraciones 
-        WHERE id = @id;
-    END
-END;
-GO
+    SET NOCOUNT ON;
 
--- 3. 
-CREATE PROCEDURE Configuracion.sp_ActualizarAuditoriaConfiguracion
-    @id INT,
-    @parametro_id INT,
-    @usuario_id INT,
-    @valor_anterior NVARCHAR(MAX) = NULL,
-    @valor_nuevo NVARCHAR(MAX)
-AS
-BEGIN
-    UPDATE Configuracion.auditoria_configuraciones
-    SET parametro_id = @parametro_id,
-        usuario_id = @usuario_id,
-        valor_anterior = @valor_anterior,
-        valor_nuevo = @valor_nuevo
-    WHERE id = @id;
-END;
-GO
-
--- 4. 
-CREATE PROCEDURE Configuracion.sp_EliminarAuditoriaConfiguracion
-    @id INT
-AS
-BEGIN
-    DELETE FROM Configuracion.auditoria_configuraciones 
-    WHERE id = @id;
+    SELECT 
+        a.id, 
+        a.parametro_id, 
+        p.clave AS parametro_clave,
+        a.usuario_id, 
+        CONCAT(u.nombres, ' ', u.apellidos) AS usuario_nombre, -- Ajustar según los campos reales de la tabla de usuarios
+        a.valor_anterior, 
+        a.valor_nuevo, 
+        a.fecha_cambio 
+    FROM Configuracion.auditoria_configuraciones a
+    LEFT JOIN Configuracion.parametros_sistema p ON a.parametro_id = p.id
+    LEFT JOIN Usuarios.usuarios u ON a.usuario_id = u.id
+    WHERE (@id IS NULL OR a.id = @id)
+    ORDER BY a.fecha_cambio DESC;
 END;
 GO
