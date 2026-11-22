@@ -22,9 +22,15 @@ export default function Hero() {
       </div>
 
       <div className="landing-hero-resumen" aria-label="Áreas que integra HomeClass">
-        <article><span><i className="bi bi-journal-bookmark-fill" /></span><h2>Catálogo académico</h2><p>Cursos, categorías y matrículas desde SQL Server.</p></article>
-        <article><span><i className="bi bi-collection-play-fill" /></span><h2>Contenido</h2><p>Secciones, lecciones, recursos y progreso guardados.</p></article>
-        <article><span><i className="bi bi-chat-square-text-fill" /></span><h2>Comunicación</h2><p>Foros y mensajes privados entre usuarios.</p></article>
+        <Link to="/funciones#funcionalidades">
+          <article><span><i className="bi bi-journal-bookmark-fill" /></span><h2>Catálogo académico</h2><p>Cursos, categorías y matrículas desde SQL Server.</p></article>
+        </Link>
+        <Link to="/funciones#funcionalidades">
+          <article><span><i className="bi bi-collection-play-fill" /></span><h2>Contenido</h2><p>Secciones, lecciones, recursos y progreso guardados.</p></article>
+        </Link>
+        <Link to="/funciones#funcionalidades">
+          <article><span><i className="bi bi-chat-square-text-fill" /></span><h2>Comunicación</h2><p>Foros y mensajes privados entre usuarios.</p></article>
+        </Link>
       </div>
     </section>
   )

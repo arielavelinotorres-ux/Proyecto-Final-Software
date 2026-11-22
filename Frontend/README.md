@@ -5,11 +5,12 @@ Aplicación React + Vite. Toda lectura y escritura persistente pasa por la API A
 ## Funciones conectadas
 
 - Inicio de sesión con usuarios y sesiones almacenados en `lms_db`.
-- Consulta de categorías, subcategorías, cursos y matrículas.
-- Administración de cursos y catálogo según el rol.
-- Consulta del contenido del curso, foros, publicaciones y mensajes privados.
+- Consulta de categorías, subcategorías, cursos y matrículas según el rol.
+- Administración de cursos, categorías y subcategorías para administración.
+- Consulta del contenido, foros y publicaciones; el alumnado puede registrar su progreso.
+- Mensajería privada.
 
-La interfaz solo muestra operaciones que están representadas por los esquemas y procedimientos SQL existentes. Los scripts de esta base no contienen tablas para asistencia, calificaciones ni una entidad de evaluación completa, por lo que esas pantallas no se presentan como funcionales.
+La interfaz solo presenta operaciones implementadas por la API activa y conectadas a los esquemas SQL. Asistencia y calificaciones no tienen tablas en los scripts actuales; las tablas de evaluaciones están incompletas y no hay rutas activas para evaluaciones, entregas o materiales. Esas pantallas antiguas no se presentan como funcionales. Consulta el [informe de errores y soluciones](docs/INFORME_ERRORES_Y_SOLUCIONES.md) para el detalle.
 
 ## Ejecutar
 

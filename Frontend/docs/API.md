@@ -12,7 +12,7 @@ El frontend envía solicitudes HTTP al backend ASP.NET. El backend accede a SQL 
 
 | Método | Ruta | Respuesta |
 |---|---|---|
-| `POST` | `/auth/login` | `{ token, usuario }`; busca la cuenta en `Usuarios.usuarios` y guarda la sesión en `Usuarios.sesiones`. |
+| `POST` | `/auth/login` | `{ token, usuario }`; autentica cualquier cuenta activa de `Usuarios.usuarios` con sus credenciales y guarda una sesión de 12 horas en `Usuarios.sesiones`. El rol se obtiene de la base de datos. |
 | `GET` | `/auth/sesion` | Usuario asociado a una sesión válida. |
 | `POST` | `/auth/salir` | `204`; elimina la sesión actual. |
 
@@ -71,6 +71,6 @@ Las lecturas de cursos, foros y publicaciones se limitan a cursos accesibles par
 
 Los scripts de `SP_ListarMensajesPrivados` y `SP_InsertarMensajePrivado` consultan/escriben una columna `activo` que no existe en la definición de `Comunicacion.mensajes_privados`; por eso el backend usa la tabla tal como está definida y no altera el esquema.
 
-## Límite del esquema actual
+## Límite de la integración actual
 
-La interfaz no expone asistencia, calificaciones, entregas ni evaluaciones porque los scripts SQL disponibles no definen las tablas necesarias para que esas funciones sean persistentes. No se simulan resultados ni se guardan datos de esas funciones en el navegador.
+La interfaz expone únicamente operaciones implementadas en la API activa y conectadas al esquema SQL. No hay rutas activas para asistencia, calificaciones, evaluaciones, entregas ni materiales. Además, los scripts de evaluaciones son incompletos: `evaluaciones.sql` vuelve a crear `Evaluaciones.preguntas` y no define la tabla padre `Evaluaciones.evaluaciones` que requieren las entregas. No se simulan resultados ni se guardan datos de esas funciones en el navegador.

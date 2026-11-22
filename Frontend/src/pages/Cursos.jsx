@@ -15,6 +15,10 @@ const CURSO_VACIO = {
   estado: 'Borrador',
 }
 
+function normalizarBusqueda(valor) {
+  return String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
+}
+
 export default function Cursos() {
   const { usuario } = useAuth()
   const avisar = useAviso()
@@ -22,7 +26,13 @@ export default function Cursos() {
   const [editando, setEditando] = useState(null)
   const [eliminando, setEliminando] = useState(null)
   const [ocupado, setOcupado] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
   const esAdmin = usuario.rol === 'admin'
+  const termino = normalizarBusqueda(busqueda)
+  const cursosFiltrados = cursos?.filter((curso) => (
+    [curso.nombre, curso.codigo, curso.categoria, curso.subcategoria, curso.docente, curso.descripcion]
+      .some((campo) => normalizarBusqueda(campo).includes(termino))
+  ))
 
   async function eliminar() {
     setOcupado(true)
@@ -43,23 +53,43 @@ export default function Cursos() {
       <Encabezado titulo={esAdmin ? 'Cursos' : 'Mis cursos'} subtitulo="Datos del catálogo académico de la base de datos.">
         {esAdmin && <button className="btn btn-primario" type="button" onClick={() => setEditando(CURSO_VACIO)}>Nuevo curso</button>}
       </Encabezado>
+      <div className="catalogo-controles">
+        <div>
+          <p className="landing-eyebrow">Catálogo académico</p>
+          <p className="catalogo-ayuda">Busca por nombre, código, categoría o docente.</p>
+        </div>
+        <label className="catalogo-busqueda">
+          <i className="bi bi-search" aria-hidden="true" />
+          <span className="sr-only">Buscar cursos</span>
+          <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar cursos" />
+        </label>
+      </div>
       {cargando && <Cargando />}
       {error && <ErrorCaja mensaje={error} alReintentar={recargar} />}
       {cursos?.length === 0 && <Vacio icono="bi-journal-x" titulo="Sin cursos" texto="No se encontraron cursos asociados a tu cuenta." />}
+      {!cargando && !error && cursos?.length > 0 && cursosFiltrados.length === 0 && (
+        <Vacio icono="bi-search" titulo="Sin resultados" texto={`No hay cursos que coincidan con “${busqueda}”.`} />
+      )}
       <div className="rejilla-cursos">
-        {cursos?.map((curso) => (
-          <article key={curso.id} className="curso-tarjeta">
-            <p className="demo-etiqueta">{curso.codigo} · {curso.estado}</p>
-            <h2><Link to={`/app/cursos/${curso.id}`}>{curso.nombre}</Link></h2>
-            <p className="suave">{curso.categoria} / {curso.subcategoria}</p>
-            <p className="suave">Docente: {curso.docente} · {curso.estudiantes} estudiantes</p>
-            {curso.descripcion && <p>{curso.descripcion}</p>}
-            <div className="acciones-linea">
-              <Link className="btn btn-claro" to={`/app/cursos/${curso.id}`}>Abrir</Link>
-              {esAdmin && <>
-                <button className="btn btn-claro" type="button" onClick={() => setEditando(curso)}>Editar</button>
-                <button className="btn btn-peligro-claro" type="button" onClick={() => setEliminando(curso)}>Eliminar</button>
-              </>}
+        {cursosFiltrados?.map((curso) => (
+          <article key={curso.id} className="curso-tarjeta curso-marketplace">
+            <div className="curso-portada" aria-hidden="true">
+              <span>{curso.categoria || 'Curso académico'}</span>
+              <i className="bi bi-journal-bookmark-fill" />
+            </div>
+            <div className="curso-contenido">
+              <div className="curso-meta"><span>{curso.codigo}</span><span className="curso-estado">{curso.estado}</span></div>
+              <h2><Link to={`/app/cursos/${curso.id}`}>{curso.nombre}</Link></h2>
+              <p className="curso-subcategoria">{[curso.categoria, curso.subcategoria].filter(Boolean).join(' / ') || 'Categoría sin asignar'}</p>
+              <p className="curso-docente"><i className="bi bi-person-workspace" aria-hidden="true" /> {curso.docente || 'Docente sin asignar'}</p>
+              {curso.descripcion && <p className="curso-descripcion">{curso.descripcion}</p>}
+              <div className="acciones-linea">
+                <Link className="btn btn-claro" to={`/app/cursos/${curso.id}`}>Abrir curso</Link>
+                {esAdmin && <>
+                  <button className="btn btn-claro" type="button" onClick={() => setEditando(curso)}>Editar</button>
+                  <button className="btn btn-peligro-claro" type="button" onClick={() => setEliminando(curso)}>Eliminar</button>
+                </>}
+              </div>
             </div>
           </article>
         ))}
