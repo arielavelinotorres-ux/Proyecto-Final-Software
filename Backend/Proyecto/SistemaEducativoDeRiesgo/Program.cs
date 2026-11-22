@@ -1,5 +1,12 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Text.Json.Serialization;
+using SistemaEducativoDeRiesgo.Application.Interfaces.Usuarios;
+using SistemaEducativoDeRiesgo.Application.Serialization;
+using SistemaEducativoDeRiesgo.Application.Services.Usuarios;
+using SistemaEducativoDeRiesgo.Domain.Interfaces.Usuario;
+using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence;
+using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence.Usuarios;
+using SistemaEducativoDeRiesgo.Insfrasctuture.Security;
+using SistemaEducativoDeRiesgo.Web.Api.Endpoints;
+using SistemaEducativoDeRiesgo.Web.Api.Middlewares;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -8,41 +15,35 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
+// Conexión y Seguridad
+builder.Services.AddSingleton<SqlConnectionFactory>();
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+// Módulo Usuarios - Repositorios
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IDocenteRepository, DocenteRepository>();
+builder.Services.AddScoped<IEstudianteRepository, EstudianteRepository>();
+builder.Services.AddScoped<IRecuperacionPasswordRepository, RecuperacionPasswordRepository>();
+
+// Módulo Usuarios - Servicios
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IDocenteService, DocenteService>();
+builder.Services.AddScoped<IEstudianteService, EstudianteService>();
+builder.Services.AddScoped<IRecuperacionPasswordService, RecuperacionPasswordService>();
+
 var app = builder.Build();
+
+app.UseMiddleware<SqlExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-Todo[] sampleTodos =
-[
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-];
-
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos)
-        .WithName("GetTodos");
-
-todosApi.MapGet("/{id}", Results<Ok<Todo>, NotFound> (int id) =>
-    sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-        ? TypedResults.Ok(todo)
-        : TypedResults.NotFound())
-    .WithName("GetTodoById");
+// Mapeo de Endpoints
+app.MapUsuariosEndpoints();
 
 app.Run();
-
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
-
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext
-{
-
-}

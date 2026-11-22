@@ -21,7 +21,12 @@
   <ItemGroup>
     <Folder Include="Integration\" />
     <Folder Include="Validation\" />
-    <Folder Include="Unit\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SistemaEducativoDeRiesgo.Application\SistemaEducativoDeRiesgo.Application.csproj" />
+    <ProjectReference Include="..\SistemaEducativoDeRiesgo.Domain\SistemaEducativoDeRiesgo.Domain.csproj" />
+    <ProjectReference Include="..\SistemaEducativoDeRiesgo.Insfrasctuture\SistemaEducativoDeRiesgo.Insfrasctuture.csproj" />
   </ItemGroup>
 
 </Project>
