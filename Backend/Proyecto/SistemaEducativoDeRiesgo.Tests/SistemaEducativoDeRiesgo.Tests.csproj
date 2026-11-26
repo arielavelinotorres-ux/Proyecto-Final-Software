@@ -27,6 +27,7 @@
     <ProjectReference Include="..\SistemaEducativoDeRiesgo.Application\SistemaEducativoDeRiesgo.Application.csproj" />
     <ProjectReference Include="..\SistemaEducativoDeRiesgo.Domain\SistemaEducativoDeRiesgo.Domain.csproj" />
     <ProjectReference Include="..\SistemaEducativoDeRiesgo.Insfrasctuture\SistemaEducativoDeRiesgo.Insfrasctuture.csproj" />
+    <ProjectReference Include="..\SistemaEducativoDeRiesgo\SistemaEducativoDeRiesgo.Web.Api.csproj" />
   </ItemGroup>
 
 </Project>
