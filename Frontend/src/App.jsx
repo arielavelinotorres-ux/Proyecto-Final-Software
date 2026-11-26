@@ -12,7 +12,7 @@ import CursoDetalle from './pages/CursoDetalle.jsx'
 import Categorias from './pages/Categorias.jsx'
 import Mensajes from './pages/Mensajes.jsx'
 import PanelLms from './pages/PanelLms.jsx'
-
+// Estructura del Nav
 export default function App() {
   return (
     <Routes>
