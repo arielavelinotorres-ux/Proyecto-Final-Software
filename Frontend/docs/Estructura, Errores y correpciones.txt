@@ -1,0 +1,681 @@
+HOMECLASS · PROYECTO FINAL DE SOFTWARE
+Frontend: estructura, hallazgos y plan de mejora
+Revisión técnica de Frontend/ (React 18 + Vite 5) · 25 de noviembre de 2026
+
+==============================================================================
+1. RESUMEN EJECUTIVO
+==============================================================================
+El frontend de HomeClass es una aplicación de una sola página (SPA) construida con React 18, Vite 5 y React Router 6 mediante HashRouter. No incorpora bibliotecas adicionales de estado o componentes; utiliza bootstrap-icons para los iconos. El acceso a los datos se realiza mediante fetch a la API ASP.NET (Backend/HomeClassApi); el navegador no se conecta directamente a SQL Server.
+La aplicación se divide en dos áreas: un sitio público (portada, páginas informativas e inicio de sesión) y un panel autenticado en /app. El panel adapta sus opciones a tres perfiles: administración, docente y estudiante.
+Indicadores de la revisión
+  - 54 archivos JS/JSX en src/ y una hoja de estilos única de 1,020 líneas.
+  - 7 rutas públicas y 5 rutas protegidas (una de ellas exclusiva para administración).
+  - 21 de los 54 archivos (≈1,840 líneas) no están conectados a las rutas activas. Corresponden a pantallas de una versión anterior (asistencia, calificaciones y evaluaciones, entre otras) que invocan métodos de API que ya no están definidos.
+  - Se identificaron 24 hallazgos: 4 de prioridad alta, 10 de prioridad media y 10 de prioridad baja.
+
+Conclusión. El código que participa en los flujos activos tiene un alcance acotado y, según la revisión estática, mantiene correspondencia con los endpoints y los campos expuestos por la API. Los principales riesgos se concentran en el despliegue (rutas de recursos y disponibilidad de la API), el ciclo de vida de la sesión y ciertos comportamientos de HashRouter. La sección 7 propone una secuencia de trabajo priorizada; los hallazgos que requieren confirmación en ejecución se señalan explícitamente.
+
+==============================================================================
+2. ESTRUCTURA DEL PROYECTO
+==============================================================================
+
+2.1 Árbol de carpetas
+---------------------
+Frontend/
+├─ index.html              Documento base; carga /src/main.jsx y Google Fonts
+├─ vite.config.js          Configura el proxy /api y la base de producción
+├─ package.json            Scripts de desarrollo, compilación y vista previa
+├─ .env.example            Variables VITE_API_URL y VITE_PROXY
+├─ public/                 favicon.svg y funcion-*.svg (ilustraciones)
+├─ docs/                   API.md, informe previo y capturas
+└─ src/
+   ├─ main.jsx             Punto de entrada y proveedores
+   ├─ App.jsx              Mapa de rutas
+   ├─ config.js            API_URL y reglas de archivos
+   ├─ styles.css           Todos los estilos (variables + tema oscuro)
+   ├─ api/                 http.js · index.js · sesion.js
+   ├─ context/             AuthContext.jsx · ToastContext.jsx
+   ├─ hooks/               useAsync.js · useTheme.js
+   ├─ layouts/             PublicLayout.jsx · AppLayout.jsx
+   ├─ components/          ui.jsx, Navbar, Footer, Hero, Features, …
+   ├─ pages/               Pantallas activas y heredadas
+   ├─ data/                funcionalidades.js
+   └─ utils/               formato, permisos, archivos, calculos
+
+2.2 Responsabilidad de cada carpeta
+-----------------------------------
+[1]
+  Carpeta: api/
+  Qué contiene: Capa de acceso a datos. http.js centraliza las peticiones y agrega el token; sesion.js administra el token en sessionStorage.
+  Archivos clave: http.js, sesion.js, index.js
+
+[2]
+  Carpeta: context/
+  Qué contiene: Estado compartido. AuthContext conserva al usuario y las acciones ingresar/salir; ToastContext muestra avisos breves.
+  Archivos clave: AuthContext.jsx, ToastContext.jsx
+
+[3]
+  Carpeta: hooks/
+  Qué contiene: useAsync carga datos y entrega { datos, cargando, error, recargar }; useTheme alterna claro/oscuro y lo recuerda.
+  Archivos clave: useAsync.js, useTheme.js
+
+[4]
+  Carpeta: layouts/
+  Qué contiene: Estructuras de página. El área pública incluye navegación y pie; el panel incluye menú lateral por rol y cabecera.
+  Archivos clave: PublicLayout.jsx, AppLayout.jsx
+
+[5]
+  Carpeta: components/
+  Qué contiene: Componentes reutilizables (ui.jsx), protección de rutas y secciones de la portada.
+  Archivos clave: ui.jsx, RutaProtegida.jsx, Navbar.jsx
+
+[6]
+  Carpeta: pages/
+  Qué contiene: Pantallas asociadas a las rutas. Las subcarpetas docente/, estudiante/ y admin/ contienen código heredado que no está conectado al flujo activo.
+  Archivos clave: Cursos.jsx, CursoDetalle.jsx, Mensajes.jsx
+
+[7]
+  Carpeta: data/
+  Qué contiene: Texto estático de la página Funciones.
+  Archivos clave: funcionalidades.js
+
+[8]
+  Carpeta: utils/
+  Qué contiene: Funciones auxiliares para fechas, permisos, validación de archivos y cálculos de riesgo.
+  Archivos clave: formato.js, permisos.js
+
+==============================================================================
+3. CÓMO FUNCIONA
+==============================================================================
+
+3.1 Arranque y proveedores
+--------------------------
+main.jsx monta la aplicación dentro de div#root con la siguiente jerarquía de proveedores:
+StrictMode
+ └─ HashRouter            rutas con # (compatibles con GitHub Pages)
+     └─ ToastProvider     avisos visibles desde cualquier pantalla
+         └─ AuthProvider  usuario, cargando, ingresar(), salir()
+             └─ App       árbol de rutas
+Antes del montaje, main.jsx elimina datos residuales de la versión de demostración (localStorage “homeclass-db-v1”, la base IndexedDB “homeclass-archivos” y tokens numéricos). Según el formato observado, los tokens emitidos por el backend son valores Base64 derivados de un GUID; por ello, esta limpieza no debería afectarlos.
+
+3.2 Rutas
+---------
+[1]
+  Ruta: /
+  Pantalla: Inicio
+  Acceso: Público. Portada con enlaces a las demás secciones.
+
+[2]
+  Ruta: /nosotros /historia /gestiones /funciones /contacto
+  Pantalla: Páginas informativas (Publicas.jsx)
+  Acceso: Público. Se renderizan mediante el componente PaginaPublica.
+
+[3]
+  Ruta: /ingresar
+  Pantalla: Ingresar
+  Acceso: Público. Si ya hay sesión redirige a /app.
+
+[4]
+  Ruta: /app
+  Pantalla: PanelLms
+  Acceso: Cualquier usuario autenticado. Muestra un resumen de cursos y accesos rápidos.
+
+[5]
+  Ruta: /app/cursos y /app/cursos/:id
+  Pantalla: Cursos · CursoDetalle
+  Acceso: Usuarios autenticados. Las acciones disponibles dependen del rol.
+
+[6]
+  Ruta: /app/mensajes
+  Pantalla: Mensajes
+  Acceso: Autenticado.
+
+[7]
+  Ruta: /app/categorias
+  Pantalla: Categorias
+  Acceso: Solo administración (RutaProtegida roles={['admin']}).
+
+[8]
+  Ruta: *
+  Pantalla: NoEncontrada
+  Acceso: Público. Cualquier ruta desconocida.
+
+3.3 Autenticación y permisos
+----------------------------
+  - Inicio de sesión: Ingresar → AuthContext.ingresar() → POST /auth/login. La respuesta contiene { token, usuario }; el token se almacena en sessionStorage con la clave homeclass-token.
+  - Peticiones autenticadas: http.js lee el token y agrega el encabezado Authorization: Bearer <token>.
+  - Restauración de sesión: si hay un token al recargar la página, AuthProvider consulta GET /auth/sesion para recuperar al usuario. Durante la consulta, cargando = true y RutaProtegida muestra “Verificando sesión…”.
+  - Protección de rutas: sin usuario → /ingresar (guardando la ruta de origen en state.desde); rol no permitido → /app.
+  - Importante: los controles del frontend solo ordenan la interfaz. La autorización real la hace la API en cada endpoint (por ejemplo, RequiereAdministrador en el backend).
+
+3.4 Capa de datos
+-----------------
+api/http.js define pedir(), que centraliza fetch, el token, el cuerpo JSON y el manejo de errores (la API responde con { "mensaje": "..." }). A partir de esa función se construye httpApi, organizado por dominio: auth, dashboard, catalogo, usuarios, cursos, foros y mensajes. api/index.js lo exporta como api.
+Las pantallas consultan datos mediante useAsync(() => api.cursos.listar(), []). El hook descarta respuestas de solicitudes obsoletas y expone recargar() para repetir una consulta después de una escritura.
+
+3.5 Layouts y componentes
+-------------------------
+  - PublicLayout: Navbar + <Outlet /> + Footer. En /ingresar cambia la clase del main para dibujar la pantalla de dos paneles.
+  - AppLayout: barra lateral oscura con navegación adaptada al rol (la opción “Categorías” solo aparece para administración), cabecera con selector de tema y acción “Salir”, y atributo data-rol para aplicar el color de acento del perfil. Incluye el enlace “Saltar al contenido”.
+  - ui.jsx agrupa las piezas reutilizables: Cargando, ErrorCaja, Vacio, StatCard, Badge, BadgeRiesgo, Campo, Modal (basado en <dialog>), Confirmar, Tabs, BarList y Encabezado.
+  - Portada y páginas informativas: Hero, Audiencias, Historia, Gestiones, Features (con data/funcionalidades.js) e IlustracionEstudio (SVG del login).
+
+3.6 Pantallas activas por rol
+-----------------------------
+[1]
+  Pantalla: PanelLms
+  Quién la usa: Todos
+  Qué permite: Total de cursos, cursos publicados, sesión activa, seis cursos recientes y accesos rápidos.
+
+[2]
+  Pantalla: Cursos
+  Quién la usa: Todos
+  Qué permite: Lista con búsqueda local (sin tildes). Administración crea, edita y elimina cursos desde un modal.
+
+[3]
+  Pantalla: CursoDetalle
+  Quién la usa: Todos
+  Qué permite: Admin: matricular, cambiar estado y quitar matrículas. Todos: ver secciones, lecciones y recursos. Estudiante: marcar lecciones completadas. Docente: crear, cerrar y archivar foros. Todos: leer y publicar en foros.
+
+[4]
+  Pantalla: Categorias
+  Quién la usa: Admin
+  Qué permite: Alta, edición y baja de categorías y subcategorías.
+
+[5]
+  Pantalla: Mensajes
+  Quién la usa: Todos
+  Qué permite: Enviar mensaje privado (máx. 200 caracteres), ver recibidos y marcar como leído.
+
+3.7 Estilos y tema
+------------------
+Un único archivo styles.css define variables CSS en :root y las redefine bajo :root[data-theme='dark']. useTheme actualiza ese atributo en <html> y guarda la preferencia en localStorage (homeclass-tema). Los estilos incluyen puntos de quiebre en 900, 820, 760, 700, 600 y 420 px, además de respetar prefers-reduced-motion. Entre las medidas de accesibilidad observadas están :focus-visible, aria-live en los avisos, etiquetas asociadas mediante useId y el uso de texto e iconos además del color.
+
+3.8 Configuración y compilación
+-------------------------------
+  - Scripts: npm run dev, npm run build y npm run preview. Requiere Node.js 18 o superior.
+  - Dependencias: react 18.3.1, react-dom 18.3.1, react-router-dom 6.30.1, bootstrap-icons 1.11.3; en desarrollo, vite 5.4.11 y @vitejs/plugin-react 4.3.4.
+  - Proxy de desarrollo: /api se reenvía a VITE_PROXY (por defecto, http://localhost:5000, puerto configurado para IIS Express).
+  - Base de producción: /Proyecto-Final-Software/ para la publicación en GitHub Pages. En desarrollo, la base es /.
+  - Variables: VITE_API_URL (por defecto /api) y VITE_PROXY. El archivo .env está en .gitignore.
+
+==============================================================================
+4. ENDPOINTS QUE CONSUME EL FRONTEND
+==============================================================================
+En la revisión estática se contrastaron las rutas utilizadas por httpApi con LmsController y AuthController. También se compararon los campos leídos por las pantallas (fecha_envio, categoria_id, creadoEn, docenteId, urlVideo y tipoArchivo, entre otros) con los contratos observados en la API.
+[1]
+  Grupo: Sesión
+  Llamadas: POST /auth/login · GET /auth/sesion · POST /auth/salir
+  Rol: Todos
+
+[2]
+  Grupo: Resumen
+  Llamadas: GET /dashboard
+  Rol: Todos
+
+[3]
+  Grupo: Catálogo
+  Llamadas: GET POST /categorias · PUT DELETE /categorias/{id} · ídem /subcategorias
+  Rol: Lectura: todos. Escritura: admin
+
+[4]
+  Grupo: Cursos
+  Llamadas: GET /cursos · GET /cursos/{id} · POST /cursos · PUT DELETE /cursos/{id}
+  Rol: Escritura: admin
+
+[5]
+  Grupo: Matrículas
+  Llamadas: POST /cursos/{id}/estudiantes · PUT DELETE /cursos/{id}/estudiantes/{estudianteId} · GET /usuarios?rol=
+  Rol: Admin
+
+[6]
+  Grupo: Contenido
+  Llamadas: GET /cursos/{id}/contenido · PUT /lecciones/{id}/progreso
+  Rol: Progreso: estudiante
+
+[7]
+  Grupo: Foros
+  Llamadas: GET POST /cursos/{id}/foros · PUT DELETE /foros/{id} · GET POST /foros/{id}/publicaciones
+  Rol: Crear foro: docente
+
+[8]
+  Grupo: Mensajes
+  Llamadas: GET POST /mensajes · PUT /mensajes/{id}/leido · GET /contactos
+  Rol: Todos
+
+==============================================================================
+5. CÓDIGO HEREDADO SIN USO
+==============================================================================
+Al seguir las importaciones desde main.jsx, se identificaron 21 archivos que no forman parte del árbol activo de la aplicación. Vite no los incluye en el paquete de producción, por lo que su presencia no bloquea la compilación; sin embargo, permanecen en el repositorio y hacen referencia a funciones que http.js ya no define (api.avisos, api.asistencia, api.evaluaciones, api.entregas, api.calificaciones, api.materiales, api.usuarios.crear y api.usuarios.actualizar).
+[1]
+  Grupo: pages/docente/
+  Archivos: Asistencia, CursoDocente, Entregas, Evaluaciones, Libro, Materiales
+  Líneas aprox.: —
+
+[2]
+  Grupo: pages/estudiante/
+  Archivos: CursoEstudiante, Historial
+  Líneas aprox.: —
+
+[3]
+  Grupo: pages/admin/
+  Archivos: Auditoria, CursoAdmin, Reportes, Usuarios
+  Líneas aprox.: —
+
+[4]
+  Grupo: pages/ sueltas
+  Archivos: Agenda, CentroAcademico, Perfil, Resumen
+  Líneas aprox.: —
+
+[5]
+  Grupo: components/
+  Archivos: AvisosCurso, SelectorArchivo
+  Líneas aprox.: —
+
+[6]
+  Grupo: utils/
+  Archivos: archivos.js, calculos.js, formato.js (solo los usa código heredado)
+  Líneas aprox.: —
+
+[7]
+  Grupo: Total
+  Archivos: 21 archivos
+  Líneas aprox.: ≈1,840
+
+El README y el informe previo indican que esas pantallas “no se presentan como funcionales”. Se recomienda evaluar su retiro del árbol activo, conservando el historial de Git como mecanismo de recuperación (ver M9).
+
+==============================================================================
+6. HALLAZGOS Y PROPUESTAS DE SOLUCIÓN
+==============================================================================
+Cada hallazgo incluye su ubicación, impacto y una propuesta de corrección. La prioridad alta corresponde a problemas que pueden afectar funciones visibles o el despliegue; la media, a riesgos de experiencia y robustez; y la baja, a mejoras de mantenimiento y acabado. Los hallazgos identificados como probables requieren validación en ejecución; se incluyen comprobaciones sugeridas en la sección 8.
+
+6.1 Prioridad alta
+------------------
+------------------------------------------------------------------------------
+A1 — Las rutas de las ilustraciones de “Funciones” fallan en producción — PRIORIDAD ALTA
+------------------------------------------------------------------------------
+Dónde:
+    src/data/funcionalidades.js (propiedad imagen) y vite.config.js (base).
+
+Impacto:
+    Las rutas son absolutas (/funcion-cursos.svg). Con base: '/Proyecto-Final-Software/', el sitio se publica en un subdirectorio, pero el navegador solicita https://usuario.github.io/funcion-cursos.svg desde la raíz del dominio y recibe un 404. Vite ajusta las referencias procesadas desde index.html, pero no reescribe automáticamente las cadenas definidas en JavaScript.
+
+Solución:
+    Construir la ruta mediante import.meta.env.BASE_URL, cuyo valor corresponde a / en desarrollo y a la base configurada en producción:
+    const base = import.meta.env.BASE_URL
+    // ...
+    imagen: `${base}funcion-cursos.svg`,
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+A2 — El enlace “Saltar al contenido” puede cambiar la ruta — PRIORIDAD ALTA
+------------------------------------------------------------------------------
+Dónde:
+    src/layouts/AppLayout.jsx: <a className="saltar" href="#contenido">.
+
+Impacto:
+    En HashRouter, el fragmento de URL se utiliza para representar la ruta. Al activar este enlace, la URL puede cambiar a #contenido y el router interpretarlo como la ruta /contenido, mostrando “Página no encontrada”. De confirmarse, una función de accesibilidad interrumpiría la navegación dentro del panel. (Probable; debe verificarse en ejecución.)
+
+Solución:
+    Evitar el cambio de ruta y mover el foco al destino. El elemento destino debe aceptar foco programático, por ejemplo, mediante tabIndex="-1":
+    <a className="saltar" href="#contenido"
+       onClick={(e) => {
+         e.preventDefault()
+         document.getElementById('contenido')?.focus()
+       }}>
+      Saltar al contenido
+    </a>
+    El elemento con id="contenido" debe incluir tabIndex="-1" para recibir el foco programáticamente.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+A3 — La gestión de sesión no distingue fallos temporales de expiración — PRIORIDAD ALTA
+------------------------------------------------------------------------------
+Dónde:
+    src/context/AuthContext.jsx (efecto inicial) y src/api/http.js.
+
+Impacto:
+    1. Al cargar la aplicación, cualquier fallo de GET /auth/sesion —incluidos errores de red o respuestas 500— ejecuta borrarToken(). Esto puede descartar una sesión válida ante un fallo temporal.
+    2. Si el token vence durante la navegación (la sesión tiene una duración de 12 horas), http.js solo lanza “Tu sesión expiró”. El usuario permanece en /app con un token inválido y las pantallas muestran errores locales en lugar de redirigirlo al inicio de sesión.
+
+Solución:
+    Adjuntar el código HTTP al error, invalidar la sesión ante un 401 y notificar al contexto cuando una petición autenticada reciba esa respuesta:
+    // api/http.js
+    let alExpirar = null
+    export const registrarExpiracion = (fn) => { alExpirar = fn }
+
+    if (!res.ok) {
+      // ... calcular `mensaje` como ahora ...
+      const error = new Error(mensaje)
+      error.status = res.status
+      if (res.status === 401 && ruta !== '/auth/login') alExpirar?.()
+      throw error
+    }
+    // context/AuthContext.jsx
+    useEffect(() => {
+      registrarExpiracion(() => { borrarToken(); setUsuario(null) })
+    }, [])
+
+    api.auth.sesion()
+      .then((u) => vigente && setUsuario(u))
+      .catch((err) => { if (err.status === 401) borrarToken() })
+    Con usuario = null, RutaProtegida redirige sola a /ingresar.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+A4 — La API no es accesible en el despliegue de producción — PRIORIDAD ALTA
+------------------------------------------------------------------------------
+Dónde:
+    src/config.js (API_URL = '/api'), vite.config.js (el proxy solo existe en desarrollo) y Backend/HomeClassApi/App_Start/WebApiConfig.cs (no habilita CORS).
+
+Impacto:
+    En desarrollo, Vite reenvía /api al backend. En producción no existe ese proxy; en GitHub Pages, /api apunta al sitio estático y las llamadas a la API fallan. Si se configura una URL de API independiente, el backend debe permitir el origen del frontend mediante CORS. Además, una página HTTPS no puede consumir una API HTTP por las restricciones de contenido mixto. Como .env está en .gitignore, las variables deben configurarse en el entorno de compilación o en un archivo de producción no versionado.
+
+Solución:
+    Definir y documentar una estrategia de publicación:
+    a) Publicar frontend y API bajo el mismo origen (por ejemplo, el frontend compilado dentro de IIS) y mantener /api.
+    b) Publicar la API en una URL HTTPS propia y apuntar el frontend a ella al compilar:
+    # variable del pipeline o .env.production
+    VITE_API_URL=https://api.tu-dominio.com/api
+    y habilitar CORS en el backend (paquete Microsoft.AspNet.WebApi.Cors):
+    config.EnableCors(new EnableCorsAttribute(
+        "https://TU-USUARIO.github.io",
+        "Authorization,Content-Type",
+        "GET,POST,PUT,DELETE"));
+
+------------------------------------------------------------------------------
+
+6.2 Prioridad media
+-------------------
+------------------------------------------------------------------------------
+M1 — No se gestiona el desplazamiento al cambiar de ruta ni al navegar con anclas — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/App.jsx; enlaces /funciones#funcionalidades en Hero.jsx.
+
+Impacto:
+    La navegación entre rutas no reinicia de forma consistente la posición de desplazamiento. Al cambiar desde una página larga, la siguiente puede mostrarse a mitad de página. Además, los enlaces con ancla (#funcionalidades) no siempre desplazan al elemento correspondiente.
+
+Solución:
+    Un componente pequeño dentro del router:
+    function ScrollAlCambiar() {
+      const { pathname, hash } = useLocation()
+      useEffect(() => {
+        if (hash) document.getElementById(hash.slice(1))?.scrollIntoView()
+        else window.scrollTo(0, 0)
+      }, [pathname, hash])
+      return null
+    }
+    // en App(): <ScrollAlCambiar /> antes de <Routes>
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M2 — La recarga del curso reemplaza temporalmente la vista — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/pages/CursoDetalle.jsx: if (cargando) return <Cargando />.
+
+Impacto:
+    Las acciones de matricular, cambiar un estado o quitar una matrícula llaman a recargar(), que establece cargando = true. Como el componente retorna antes de renderizar el contenido, la página completa desaparece brevemente y puede perderse la posición de desplazamiento, aunque los datos anteriores sigan disponibles.
+
+Solución:
+    Mostrar el indicador a pantalla completa solo la primera vez:
+    if (cargando && !curso) return <Cargando />
+    if (error && !curso) return <ErrorCaja mensaje={error} alReintentar={recargar} />
+    useAsync ya conserva datos mientras recarga, por lo que basta con esta condición.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M3 — El cierre de sesión desde la navegación pública puede dejar un error no gestionado — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/components/Navbar.jsx: alSalir().
+
+Impacto:
+    salir() limpia la sesión local y vuelve a lanzar el error si falla la API. Navbar no captura ese error, por lo que queda como rechazo no gestionado y no se ejecuta navegar('/'). AppLayout sí gestiona el caso.
+
+Solución:
+    async function alSalir() {
+      try { await salir() } catch (e) { avisar(e.message, 'error') }
+      navegar('/')
+    }
+    Como alternativa, el contexto puede tratar el cierre local de sesión como definitivo y gestionar por separado cualquier fallo de la solicitud al backend.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M4 — La página 404 hereda estilos incompatibles del formulario de ingreso — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/pages/NoEncontrada.jsx usa className="login"; src/styles.css redefine .login (hacia la línea 153) como una cuadrícula de dos columnas con caja blanca y altura mínima.
+
+Impacto:
+    El título, el texto y el botón se distribuyen como elementos de una cuadrícula de dos columnas diseñada para el formulario de inicio de sesión. Esto produce una composición inconsistente, especialmente con el tema oscuro.
+
+Solución:
+    Usar una clase propia, por ejemplo:
+    .pagina-404 { max-width: 460px; margin: 64px auto; text-align: center; }
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M5 — Hay encabezados h1 duplicados en algunas vistas del panel — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    AppLayout.jsx dibuja <h1>{pagina}</h1> en la cabecera y Encabezado (en ui.jsx) dibuja otro <h1> en Cursos, Detalle, Categorías y Mensajes.
+
+Impacto:
+    Dos encabezados h1 en una misma vista pueden dificultar la comprensión de la jerarquía del contenido y la navegación por encabezados, en particular para usuarios de tecnologías de asistencia.
+
+Solución:
+    Cambiar el de la cabecera por un <p className="app-bar-titulo"> con el mismo estilo (ajustando el selector CSS .app-bar h1) y dejar que cada página sea dueña de su <h1>. PanelLms hoy no tiene <h1>: convertir su “¡Hola, …!” de <h2> a <h1>.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M6 — La validación de URL de recursos no cubre entradas no válidas — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/pages/CursoDetalle.jsx: urlRecursoSegura(url).
+
+Impacto:
+    1. Si url llega como undefined (el backend usa NullValueHandling.Ignore y omite valores nulos), url.startsWith produce un TypeError y puede interrumpir el renderizado. Actualmente la columna url_recurso es NOT NULL; aun así, conviene validar la entrada en el cliente. 2. Se acepta cualquier cadena que comience con /, incluido //sitio-externo.com (URL relativa al protocolo).
+
+Solución:
+    function urlRecursoSegura(url) {
+      if (typeof url !== 'string') return false
+      return /^https?:\/\//i.test(url) ||
+             (url.startsWith('/') && !url.startsWith('//'))
+    }
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M7 — Las acciones de escritura no previenen envíos duplicados — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    Publicar en foro, crear foro y matricular en CursoDetalle.jsx; archivar foro (Confirmar sin ocupado); eliminar en Categorias.jsx; guardar categorías y subcategorías.
+
+Impacto:
+    Los clics o envíos repetidos pueden generar solicitudes duplicadas: por ejemplo, publicaciones idénticas o un segundo intento rechazado por duplicidad. Cursos.jsx y Mensajes.jsx ya previenen este caso mediante estados enviando/ocupado.
+
+Solución:
+    Replicar el patrón que ya existe en Mensajes.jsx:
+    const [enviando, setEnviando] = useState(false)
+    async function publicar(e) {
+      e.preventDefault()
+      if (enviando) return
+      setEnviando(true)
+      try { /* ...llamada... */ } finally { setEnviando(false) }
+    }
+    <button type="submit" disabled={enviando}>…</button>
+    Y pasar ocupado={enviando} a cada Confirmar.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M8 — La capa HTTP presenta errores poco accionables y no limita el tiempo de espera — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/api/http.js, rama !res.ok.
+
+Impacto:
+    Un 404 que no contiene JSON muestra “Configura VITE_PROXY cuando esté construido”, un mensaje de configuración destinado a desarrollo que puede llegar al usuario final. Con el backend apagado, el proxy de Vite podría responder 500; este comportamiento debe confirmarse en ejecución. En una respuesta 200 con JSON inválido, res.json() también puede producir un SyntaxError poco informativo. Las solicitudes, además, no tienen un límite de tiempo explícito.
+
+Solución:
+    if (res.status >= 500)
+      mensaje = 'El servidor no pudo completar la solicitud. Inténtalo más tarde.'
+    if (res.status === 404 && !tipoContenido.includes('application/json'))
+      throw new Error(import.meta.env.DEV
+        ? 'No se encontró el backend. Revisa VITE_PROXY y que la API esté iniciada.'
+        : 'El servicio no está disponible por ahora.')
+    Considerar un límite de tiempo explícito, compatible con la versión objetivo de los navegadores, para evitar solicitudes indefinidas.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M9 — Código heredado desconectado de las rutas activas — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    Ver sección 5. También utils/permisos.js y la propiedad permisosAdmin de RutaProtegida (la API no envía permisosAdmin), y las constantes EXTENSIONES_PERMITIDAS y MAX_MB_GLOBAL de config.js, que solo usa código heredado.
+
+Impacto:
+    La presencia de estas pantallas puede dar a entender que asistencia, calificaciones o evaluaciones están disponibles, aunque no formen parte de los flujos activos. También aumenta el riesgo de volver a conectar código que invoca endpoints inexistentes y el costo de mantener estilos y utilidades asociadas.
+
+Solución:
+    1. Confirmar que el código está respaldado en Git y, si hace falta, crear una etiqueta de referencia (por ejemplo, git tag version-anterior).
+    2. Eliminar las carpetas pages/docente, pages/estudiante, pages/admin, las páginas sueltas, AvisosCurso, SelectorArchivo y los utils que dependan de ellas.
+    3. Quitar de config.js, permisos.js y RutaProtegida lo que ya no se use, y los estilos CSS asociados.
+    Cuando exista backend para esas funciones, se reconstruyen con el cliente http.js actual.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+M10 — El formulario de curso consulta datos aunque el modal esté cerrado — PRIORIDAD MEDIA
+------------------------------------------------------------------------------
+Dónde:
+    src/pages/Cursos.jsx: FormularioCurso se monta siempre para administración.
+
+Impacto:
+    Dos instancias internas de useAsync ejecutan GET /subcategorias y GET /usuarios?rol=docente al abrir la lista de cursos, aunque no se abra el modal. Si alguna solicitud falla, el error puede quedar dentro de un modal que no está visible.
+
+Solución:
+    Montar el formulario únicamente cuando se inicia la creación o edición:
+    {esAdmin && editando && (
+      <FormularioCurso curso={editando} … />
+    )}
+
+------------------------------------------------------------------------------
+
+6.3 Prioridad baja
+------------------
+B1
+  Hallazgo y ubicación: Destello durante la inicialización del tema. useTheme aplica data-theme dentro de un useEffect, por lo que puede mostrarse brevemente el tema claro antes de aplicar el tema oscuro. Tampoco se consulta prefers-color-scheme. (hooks/useTheme.js)
+  Solución: Inicializar el tema antes del primer renderizado y definir un valor predeterminado coherente con la preferencia del sistema; mantener la misma lógica en el hook.
+
+B2
+  Hallazgo y ubicación: Posible ejecución duplicada del callback de cierre del modal. Cuando el cierre se controla mediante la propiedad abierto, d.close() emite el evento close y alCerrar puede ejecutarse una segunda vez. Actualmente parece no tener efectos visibles. (components/ui.jsx)
+  Solución: onClose={() => abierto && alCerrar()}.
+
+B3
+  Hallazgo y ubicación: Las rutas desconocidas bajo `/app/…` coinciden con la ruta comodín pública y se muestran fuera del layout autenticado. (App.jsx)
+  Solución: Añadir <Route path="*" element={<NoEncontrada />} /> dentro de AppLayout.
+
+B4
+  Hallazgo y ubicación: `/app/cursos/abc` convierte el id a NaN y genera una solicitud a /cursos/NaN; el usuario recibe un error 404 en lugar de un mensaje de validación específico. (CursoDetalle.jsx)
+  Solución: Validar Number.isInteger(id) y mostrar “Curso no encontrado”.
+
+B5
+  Hallazgo y ubicación: Descripción vacía. La API omite los valores nulos, por lo que la lista de categorías puede mostrar “ · Activa” sin descripción. (Categorias.jsx)
+  Solución: [item.descripcion, item.activo ? 'Activa' : 'Inactiva'].filter(Boolean).join(' · ').
+
+B6
+  Hallazgo y ubicación: Recursos residuales de la demostración. Foros y Mensajería reutilizan funcion-entregas.svg y funcion-resumen.svg; funcion-asistencia.svg y funcion-calificaciones.svg no se utilizan. También permanecen la clase demo-etiqueta y comentarios que mencionan “mock”.
+  Solución: Asignar ilustraciones pertinentes o retirar los recursos sin uso; renombrar demo-etiqueta y actualizar los comentarios relacionados.
+
+B7
+  Hallazgo y ubicación: Anuncios de avisos. Los errores usan role="status", que suele anunciar los cambios de forma no urgente, y los setTimeout no se cancelan al desmontar. (ToastContext.jsx)
+  Solución: Evaluar role="alert" para errores y conservar los identificadores de los temporizadores para cancelarlos cuando corresponda.
+
+B8
+  Hallazgo y ubicación: No hay scripts de pruebas ni lint en package.json, aunque el código incluye directivas de ESLint. El informe previo registra cuatro vulnerabilidades en dependencias (tres moderadas y una alta); el estado debe volver a comprobarse antes de priorizar actualizaciones.
+  Solución: Incorporar herramientas de lint y pruebas automatizadas de forma incremental, priorizando flujos críticos como useAsync, RutaProtegida y http.js. Ejecutar npm audit y evaluar las actualizaciones en una rama independiente.
+
+B9
+  Hallazgo y ubicación: Funcionalidad de mensajería limitada. Solo existe una bandeja de recibidos, sin vista de enviados ni paginación. Los mensajes existentes con más de 200 caracteres no pueden marcarse como leídos (la API responde 409) y la interfaz muestra un error genérico. (Mensajes.jsx)
+  Solución: Presentar un mensaje accionable cuando la API responda 409; evaluar bandeja de enviados y paginación según las necesidades del producto y el volumen de datos.
+
+B10
+  Hallazgo y ubicación: Metadatos del documento. Faltan una conexión anticipada (preconnect) a fonts.gstatic.com y <meta name="description">; el título permanece igual en todas las rutas. (index.html)
+  Solución: Añadir los metadatos pertinentes y actualizar document.title según la ruta.
+
+==============================================================================
+7. PLAN DE ACCIÓN SUGERIDO
+==============================================================================
+Secuencia sugerida según impacto y esfuerzo. Las estimaciones son aproximadas y presuponen familiaridad con el proyecto.
+[1]
+  Orden: 1
+  Acción: Corregir las rutas de imágenes y definir la estrategia de despliegue de la API (mismo origen o CORS sobre HTTPS).
+  Cubre: A1, A4
+  Esfuerzo: 1–3 h
+
+[2]
+  Orden: 2
+  Acción: Corregir el enlace “Saltar al contenido” y gestionar explícitamente el desplazamiento entre rutas.
+  Cubre: A2, M1
+  Esfuerzo: 30 min
+
+[3]
+  Orden: 3
+  Acción: Robustecer el ciclo de vida de la sesión: propagar el estado HTTP en los errores, gestionar respuestas 401, tolerar fallos de red y evitar errores no gestionados al cerrar sesión.
+  Cubre: A3, M3, M8
+  Esfuerzo: 2 h
+
+[4]
+  Orden: 4
+  Acción: Mejorar CursoDetalle: conservar la vista durante las recargas, validar URLs de recursos y prevenir envíos duplicados.
+  Cubre: M2, M6, M7
+  Esfuerzo: 1–2 h
+
+[5]
+  Orden: 5
+  Acción: Revisar y retirar el código heredado y la configuración que no tenga uso en los flujos activos.
+  Cubre: M9, B6
+  Esfuerzo: 1 h
+
+[6]
+  Orden: 6
+  Acción: Corregir la página 404, la jerarquía de encabezados y el montaje del formulario de cursos bajo demanda.
+  Cubre: M4, M5, M10, B3, B4
+  Esfuerzo: 1 h
+
+[7]
+  Orden: 7
+  Acción: Abordar las mejoras restantes: inicialización del tema, avisos, metadatos, pruebas y lint.
+  Cubre: B1, B2, B5, B7–B10
+  Esfuerzo: Según agenda
+
+==============================================================================
+8. CRITERIOS DE VALIDACIÓN
+==============================================================================
+  - Ejecutar npm ci y npm run build. A continuación, iniciar npm run preview y abrir /Proyecto-Final-Software/ para confirmar que cargan las imágenes de Funciones (A1).
+  - Navegar con teclado hasta “Saltar al contenido” y activarlo: el foco debe moverse al contenido sin cambiar de ruta (A2).
+  - Validar por separado una sesión expirada y un fallo temporal de red al restaurarla. La sesión debe invalidarse ante un 401, pero conservarse ante un error de conectividad (A3).
+  - Detener el backend y recargar /app: el mensaje debe ser comprensible y un fallo de red no debe borrar la sesión (A3, M8).
+  - Abrir /#/funciones, desplazarse hacia abajo y navegar a otra ruta: la nueva vista debe comenzar en la posición prevista (M1).
+  - Como usuario de administración, matricular a un estudiante: la vista y su posición de desplazamiento deben mantenerse durante la recarga (M2).
+  - Abrir /#/app/cursos/abc y /#/app/ruta-falsa: cada ruta debe presentar un mensaje coherente dentro del layout del panel (B3, B4).
+  - Activar el tema oscuro y recargar: no debe aparecer un destello del tema claro (B1).
+
+==============================================================================
+9. ALCANCE Y LIMITACIONES DE ESTA REVISIÓN
+==============================================================================
+  - Este documento se basa en una revisión estática de Frontend/, contrastada con LmsController, AuthController y WebApiConfig del backend. No se ejecutaron la aplicación ni la base de datos, y no se validó la compilación en este entorno.
+  - Los hallazgos señalados como probables (A2 y el código de respuesta del proxy en M8) dependen del comportamiento en ejecución y requieren confirmación mediante las verificaciones de la sección 8.
+  - El backend y la base de datos no se evaluaron fuera de lo necesario para contrastar el contrato consumido por el frontend.
+  - Este documento complementa docs/INFORME_ERRORES_Y_SOLUCIONES.md, que registra cambios anteriores (rediseño, navegación y referencias de .NET). Aquí se describen los hallazgos identificados en el estado del código revisado.
