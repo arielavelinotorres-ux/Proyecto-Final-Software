@@ -4,22 +4,24 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.DTOs.Academico
 {
-    internal class academicoDtos
+    internal class CategoriasDtos
     {
-        public record CrearacademicoRequest(
-            int AcademicoId,
+        public record CrearCategoriasRequest(
+            int CategoriasId,
             string? nombre,
             string?descripcion,
             bool activo);
 
 
-        public record ActualizaracademicoRequest(
+        public record ActualizarCategoriasRequest(
+            int CategoriasId,
             string? nombre,
             string?descripcion,
             bool activo);
 
 
-        public record academicoResponse(
+        public record CategoriasResponse(
+            int CategoriasId,
             int AcademicoId,
             string? nombre,
             string? descripcion,
