@@ -4,28 +4,29 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.DTOs.Comunicacion
 {
-    internal class MensajePrivadoDtos
-    {
-        public record CrearMensajePrivadoRequest(
-            int EmisorId,   
-            int ReceptorId,
-            string Asunto,
-            string Contenido,           
-            bool Leido
-            );
-        public record ActualizarMensajePrivadoRequest(
-            int EmisorId,
-            int ReceptorId,
-            string Asunto,
-            string Contenido,
-            bool Leido
-            );
-        public record MensajePrivadoResponse(
-            int EmisorId,
-            int ReceptorId,
-            string Asunto,
-            string Contenido,
-            bool Leido
-            );
-    }
+    public record CrearMensajePrivadoRequest(
+        int EmisorId,
+        int ReceptorId,
+        string? Asunto,
+        string Contenido);
+
+    public record MensajeRecibidoResponse(
+        int Id,
+        int EmisorId,
+        string EmisorNombre,
+        int ReceptorId,
+        string? Asunto,
+        string Contenido,
+        bool Leido,
+        DateTime FechaEnvio);
+
+    public record MensajeEnviadoResponse(
+        int Id,
+        int EmisorId,
+        int ReceptorId,
+        string ReceptorNombre,
+        string? Asunto,
+        string Contenido,
+        bool Leido,
+        DateTime FechaEnvio);
 }

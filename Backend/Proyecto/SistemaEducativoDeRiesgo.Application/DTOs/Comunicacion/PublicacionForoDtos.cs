@@ -4,25 +4,22 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.DTOs.Comunicacion
 {
-    internal class PublicacionForoDtos
-    {
-        public record CrearPublicacionForoRequest(
-            int ForoId,
-            int UsuarioId,
-            int PublicacionId,
-            string? Contenido   
-            );
-        public record ActualizarPublicacionForoRequest(
-             int ForoId,
-            int UsuarioId,
-            int PublicacionId,
-            string? Contenido
-            );
-        public record PublicacionForoResponse(
-             int ForoId,
-            int UsuarioId,
-            int PublicacionId,
-            string? Contenido
-            );
-    }
+    public record CrearPublicacionForoRequest(
+         int ForoId,
+         int UsuarioId,
+         int? PublicacionPadreId,
+         string Contenido);
+
+    public record ActualizarPublicacionForoRequest(
+        string Contenido);
+
+    public record PublicacionForoResponse(
+        int Id,
+        int ForoId,
+        int UsuarioId,
+        string AutorRol,
+        string AutorNombre,
+        int? PublicacionPadreId,
+        string Contenido,
+        DateTime CreadoEn);
 }

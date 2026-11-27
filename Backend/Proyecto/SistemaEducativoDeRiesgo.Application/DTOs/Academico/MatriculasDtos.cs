@@ -9,19 +9,19 @@ namespace SistemaEducativoDeRiesgo.Application.DTOs.Academico
         public record CrearMatriculasRequest(
             int EstudianteId,
             int CursoId,
-            Datetime FechaMatricula,
+            DateTime FechaMatricula,
             string? Estado);
 
         public record ActualizarMatriculasRequest(
             int EstudianteId,
             int CursoId,
-            Datetime FechaMatricula,
+            DateTime FechaMatricula,
             string? Estado);
 
         public record MatriculasResponse(
             int EstudianteId,
             int CursoId,
-            Datetime FechaMatricula,
+            DateTime FechaMatricula,
             string? Estado);
     }
 }
