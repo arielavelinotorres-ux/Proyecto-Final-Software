@@ -9,8 +9,8 @@ export default function Navbar() {
   const { usuario, salir } = useAuth()
   const navegar = useNavigate()
   const secciones = [
-    ['nosotros', 'Nosotros'], ['historia', 'Historia'], ['gestiones', 'Gestiones'],
-    ['funciones', 'Funciones'], ['contacto', 'Contacto'],
+    ['nosotros', 'Nosotros'], ['gestiones', 'Gestiones'],
+    ['contacto', 'Contacto'],
   ]
 
   async function alSalir() {
@@ -21,7 +21,7 @@ export default function Navbar() {
   return (
     <header className="nav">
       <Link className="brand" to="/" aria-label="HomeClass, inicio">
-        <span className="brand-mark"><IconoHomeClass tipo="marca" /></span>
+        <span className="brand-mark"><img className="homeclass-logo-image" src="/homeclass-logo.jpg" alt="" /></span>
         <span>
           <strong className="brand-name">HomeClass</strong>
           <small>Entorno Académico</small>

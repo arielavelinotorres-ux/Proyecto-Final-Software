@@ -34,7 +34,7 @@ export default function AppLayout() {
       <a className="saltar" href="#contenido">Saltar al contenido</a>
       <aside className="lateral">
         <NavLink to="/" className="brand brand-lateral" aria-label="HomeClass, ir al inicio">
-          <span className="brand-mark"><IconoHomeClass tipo="marca" /></span>
+          <span className="brand-mark"><img className="homeclass-logo-image" src="/homeclass-logo.jpg" alt="" /></span>
           <span><strong className="brand-name">HomeClass</strong><small>Entorno académico</small></span>
         </NavLink>
         <p className="menu-etiqueta">MENÚ PRINCIPAL</p>
@@ -77,7 +77,9 @@ export default function AppLayout() {
           </div>
         </header>
         <main id="contenido" className="contenido" tabIndex={-1}>
-          <Outlet />
+          <div key={ubicacion.pathname} className="page-transition">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

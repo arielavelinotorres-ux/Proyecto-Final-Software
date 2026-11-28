@@ -11,7 +11,9 @@ export default function PublicLayout() {
     <>
       <Navbar />
       <main className={esIngreso ? 'login-page' : 'publico'}>
-        <Outlet />
+        <div key={pathname} className="page-transition">
+          <Outlet />
+        </div>
       </main>
       <Footer />
     </>

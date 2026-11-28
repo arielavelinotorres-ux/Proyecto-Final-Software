@@ -20,25 +20,11 @@ export default function Inicio() {
             <span>Su propósito y las personas a quienes conecta.</span>
             <i className="bi bi-arrow-right home-overview-flecha" aria-hidden="true" />
           </Link>
-          <Link className="home-overview-card" to="/historia">
-            <span className="home-overview-icono"><IconoHomeClass tipo="historia" /></span>
-            <span className="home-overview-etiqueta">El proyecto</span>
-            <strong>Historia y enfoque</strong>
-            <span>El problema académico que busca resolver.</span>
-            <i className="bi bi-arrow-right home-overview-flecha" aria-hidden="true" />
-          </Link>
           <Link className="home-overview-card" to="/gestiones">
             <span className="home-overview-icono"><IconoHomeClass tipo="perfiles" /></span>
             <span className="home-overview-etiqueta">Por perfil</span>
             <strong>Herramientas y tareas</strong>
             <span>Qué puede hacer administración, docencia y estudiantes.</span>
-            <i className="bi bi-arrow-right home-overview-flecha" aria-hidden="true" />
-          </Link>
-          <Link className="home-overview-card" to="/funciones">
-            <span className="home-overview-icono"><IconoHomeClass tipo="funciones" /></span>
-            <span className="home-overview-etiqueta">Funciones</span>
-            <strong>Cursos, contenido y comunicación</strong>
-            <span>Explora las operaciones conectadas al backend.</span>
             <i className="bi bi-arrow-right home-overview-flecha" aria-hidden="true" />
           </Link>
           <Link className="home-overview-card" to="/contacto">
@@ -57,7 +43,6 @@ export default function Inicio() {
           <p>Conoce quiénes somos y qué puede hacer cada perfil en páginas dedicadas.</p>
         </div>
         <div className="landing-acciones">
-          <Link className="btn btn-landing" to="/funciones">Ver funcionalidades <i className="bi bi-arrow-right" /></Link>
           <Link className="landing-enlace" to="/nosotros">Conocer HomeClass</Link>
         </div>
       </section>

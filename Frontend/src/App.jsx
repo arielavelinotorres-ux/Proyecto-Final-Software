@@ -4,7 +4,7 @@ import PublicLayout from './layouts/PublicLayout.jsx'
 import AppLayout from './layouts/AppLayout.jsx'
 import RutaProtegida from './components/RutaProtegida.jsx'
 import Inicio from './pages/Inicio.jsx'
-import { ContactoPage, FuncionesPage, GestionesPage, HistoriaPage, NosotrosPage } from './pages/Publicas.jsx'
+import { ContactoPage, GestionesPage, NosotrosPage } from './pages/Publicas.jsx'
 import Ingresar from './pages/Ingresar.jsx'
 import NoEncontrada from './pages/NoEncontrada.jsx'
 import Cursos from './pages/Cursos.jsx'
@@ -19,9 +19,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route index element={<Inicio />} />
         <Route path="nosotros" element={<NosotrosPage />} />
-        <Route path="historia" element={<HistoriaPage />} />
         <Route path="gestiones" element={<GestionesPage />} />
-        <Route path="funciones" element={<FuncionesPage />} />
         <Route path="contacto" element={<ContactoPage />} />
         <Route path="ingresar" element={<Ingresar />} />
       </Route>

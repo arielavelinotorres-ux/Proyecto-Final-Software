@@ -8,9 +8,9 @@ export default function Audiencias() {
           <p>HomeClass conecta el catálogo académico con el trabajo que ocurre dentro de cada curso. La información se consulta y actualiza mediante la API conectada a SQL Server.</p>
         </div>
         <ul className="landing-proposito-puntos">
-          <li><i className="bi bi-journal-check" /><span><strong>Organiza los cursos</strong><small>Administra el catálogo, las categorías y las matrículas.</small></span></li>
-          <li><i className="bi bi-graph-up-arrow" /><span><strong>Da seguimiento al contenido</strong><small>Consulta lecciones, recursos y progreso académico.</small></span></li>
-          <li><i className="bi bi-people" /><span><strong>Conecta a la comunidad educativa</strong><small>Ofrece herramientas según las responsabilidades de cada cuenta.</small></span></li>
+          <li><span><strong>Organiza los cursos</strong><small>Administra el catálogo, las categorías y las matrículas.</small></span></li>
+          <li><span><strong>Da seguimiento al contenido</strong><small>Consulta lecciones, recursos y progreso académico.</small></span></li>
+          <li><span><strong>Conecta a la comunidad educativa</strong><small>Ofrece herramientas según las responsabilidades de cada cuenta.</small></span></li>
         </ul>
       </section>
 
