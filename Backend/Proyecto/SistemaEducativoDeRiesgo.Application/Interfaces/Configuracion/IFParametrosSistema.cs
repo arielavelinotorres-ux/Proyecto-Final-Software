@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.Interfaces.Configuracion
 {
-    internal class IFParametrosSistema
+    public interface IFParametrosSistema
     {
         Task<int> CrearAsync(CrearParametrosSistemaRequest request);
         Task ActualizarAsync(int id, ActualizarParametrosSistemaRequest request);
