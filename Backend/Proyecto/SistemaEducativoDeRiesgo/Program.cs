@@ -15,6 +15,10 @@ using SistemaEducativoDeRiesgo.Application.Interfaces.Evaluaciones;
 using SistemaEducativoDeRiesgo.Application.Services.Evaluaciones;
 using SistemaEducativoDeRiesgo.Domain.Interfaces.Evaluaciones;
 using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence.Evaluaciones;
+using SistemaEducativoDeRiesgo.Application.Interfaces.Monitoreo;
+using SistemaEducativoDeRiesgo.Application.Services.Monitoreo;
+using SistemaEducativoDeRiesgo.Domain.Interfaces.Monitoreo;
+using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence.Monitoreo;
 
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -69,6 +73,16 @@ builder.Services.AddScoped<IPreguntaService, PreguntaService>();
 builder.Services.AddScoped<IOpcionPreguntaService, OpcionPreguntaService>();
 builder.Services.AddScoped<IRespuestaEstudianteService, RespuestaEstudianteService>();
 
+// Módulo Monitoreo - Repositorios
+builder.Services.AddScoped<ICertificadoRepository, CertificadoRepository>();
+builder.Services.AddScoped<IEstudianteRiesgoRepository, EstudianteRiesgoRepository>();
+builder.Services.AddScoped<IProgresoLeccionRepository, ProgresoLeccionRepository>();
+
+// Módulo Monitoreo - Servicios
+builder.Services.AddScoped<ICertificadoService, CertificadoService>();
+builder.Services.AddScoped<IEstudianteRiesgoService, EstudianteRiesgoService>();
+builder.Services.AddScoped<IProgresoLeccionService, ProgresoLeccionService>();
+
 var app = builder.Build();
 
 app.UseMiddleware<SqlExceptionMiddleware>();
@@ -82,5 +96,6 @@ if (app.Environment.IsDevelopment())
 app.MapUsuariosEndpoints();
 app.MapComunicacionEndpoints();
 app.MapEvaluacionesEndpoints();
+app.MapMonitoreoEndpoints();
 
 app.Run();

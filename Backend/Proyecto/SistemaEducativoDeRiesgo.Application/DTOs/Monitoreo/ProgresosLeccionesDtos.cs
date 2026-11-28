@@ -4,27 +4,17 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.DTOs.Monitoreo
 {
-    internal class ProgresosLeccionesDtos
-    {
-        public record CrearProgresoLeccionRequest(
-            int EstudianteId,
-            int LeccionId,
-            bool Completado,
-            DateTime FechaProgreso
-            );
+    public record GuardarProgresoLeccionRequest(
+         int EstudianteId,
+         int LeccionId,
+         bool Completado);
 
-        public record ActualizarProgresoLeccionRequest(
-            int EstudianteId,
-            int LeccionId,
-            bool Completado,
-            DateTime FechaProgreso
-            );
-
-        public record ProgresoLeccionResponse(
-            int EstudianteId,
-            int LeccionId,
-            bool Completado,
-            DateTime FechaProgreso
-            );
-    }
+    public record ProgresoLeccionResponse(
+        int Id,
+        int EstudianteId,
+        int LeccionId,
+        string LeccionTitulo,
+        int CursoId,
+        bool Completado,
+        DateTime? FechaCompletado);
 }

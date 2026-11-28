@@ -6,6 +6,7 @@ using SistemaEducativoDeRiesgo.Application.DTOs;
 using SistemaEducativoDeRiesgo.Application.DTOs.Usuarios;
 using SistemaEducativoDeRiesgo.Application.DTOs.Comunicacion;
 using SistemaEducativoDeRiesgo.Application.DTOs.Evaluaciones;
+using SistemaEducativoDeRiesgo.Application.DTOs.Monitoreo;
 
 namespace SistemaEducativoDeRiesgo.Application.Serialization
 {
@@ -39,7 +40,6 @@ namespace SistemaEducativoDeRiesgo.Application.Serialization
     [JsonSerializable(typeof(ValidarTokenResponse))]
 
     // Módulo Comunicación
-
     [JsonSerializable(typeof(CrearForoRequest))]
     [JsonSerializable(typeof(ActualizarForoRequest))]
     [JsonSerializable(typeof(ForoResponse))]
@@ -86,6 +86,22 @@ namespace SistemaEducativoDeRiesgo.Application.Serialization
     [JsonSerializable(typeof(CalificarRespuestaEstudianteRequest))]
     [JsonSerializable(typeof(RespuestaEstudianteResponse))]
     [JsonSerializable(typeof(List<RespuestaEstudianteResponse>))]
+
+    // Módulo Monitoreo
+    [JsonSerializable(typeof(CrearCertificadoRequest))]
+    [JsonSerializable(typeof(ActualizarCertificadoRequest))]
+    [JsonSerializable(typeof(CertificadoResponse))]
+    [JsonSerializable(typeof(List<CertificadoResponse>))]
+    [JsonSerializable(typeof(ValidarCertificadoResponse))]
+
+    [JsonSerializable(typeof(CrearEstudianteRiesgoRequest))]
+    [JsonSerializable(typeof(ActualizarEstudianteRiesgoRequest))]
+    [JsonSerializable(typeof(EstudianteRiesgoResponse))]
+    [JsonSerializable(typeof(List<EstudianteRiesgoResponse>))]
+
+    [JsonSerializable(typeof(GuardarProgresoLeccionRequest))]
+    [JsonSerializable(typeof(ProgresoLeccionResponse))]
+    [JsonSerializable(typeof(List<ProgresoLeccionResponse>))]
 
     public partial class AppJsonSerializerContext : JsonSerializerContext
     {
