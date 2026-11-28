@@ -3,7 +3,7 @@ Frontend: estructura, hallazgos y plan de mejora
 Revisión técnica de Frontend/ (React 18 + Vite 5) · 25 de noviembre de 2026
 
 ==============================================================================
-1. RESUMEN EJECUTIVO
+1. RESUMEN
 ==============================================================================
 El frontend de HomeClass es una aplicación de una sola página (SPA) construida con React 18, Vite 5 y React Router 6 mediante HashRouter. No incorpora bibliotecas adicionales de estado o componentes; utiliza bootstrap-icons para los iconos. El acceso a los datos se realiza mediante fetch a la API ASP.NET (Backend/HomeClassApi); el navegador no se conecta directamente a SQL Server.
 La aplicación se divide en dos áreas: un sitio público (portada, páginas informativas e inicio de sesión) y un panel autenticado en /app. El panel adapta sus opciones a tres perfiles: administración, docente y estudiante.
