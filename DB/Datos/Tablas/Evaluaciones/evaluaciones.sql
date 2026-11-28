@@ -1,15 +1,21 @@
 USE lms_db;
 GO
 
-IF OBJECT_ID('Evaluaciones.preguntas', 'U') IS NULL
+IF OBJECT_ID('Evaluaciones.evaluaciones', 'U') IS NULL
 BEGIN
-    CREATE TABLE Evaluaciones.preguntas (
+    CREATE TABLE Evaluaciones.evaluaciones (
         id INT IDENTITY(1,1) PRIMARY KEY,
-        evaluacion_id INT NOT NULL CONSTRAINT FK_preguntas_evaluaciones REFERENCES Evaluaciones.evaluaciones(id) ON DELETE CASCADE,
-        enunciado NVARCHAR(MAX) NOT NULL,
-        tipo_pregunta NVARCHAR(30) NOT NULL CHECK (tipo_pregunta IN ('OpcionMultiple', 'VerdaderoFalso', 'TextoAbierto')),
-        puntaje DECIMAL(5,2) DEFAULT 1.00,
-        orden INT NOT NULL
+        curso_id INT NOT NULL CONSTRAINT FK_evaluaciones_cursos REFERENCES Academico.cursos(id) ON DELETE CASCADE,
+        titulo NVARCHAR(150) NOT NULL,
+        descripcion NVARCHAR(MAX) NULL,
+        tipo NVARCHAR(30) NOT NULL CHECK (tipo IN ('Tarea', 'Examen', 'Cuestionario', 'Proyecto')),
+        puntaje_maximo DECIMAL(5,2) DEFAULT 100.00,
+        fecha_inicio DATETIME2 DEFAULT GETDATE(),
+        fecha_limite DATETIME2 NULL,
+        estado NVARCHAR(20) DEFAULT 'Activo' CHECK (estado IN ('Activo', 'Cerrado', 'Archivado')),
+        creado_en DATETIME2 DEFAULT GETDATE()
     );
 END;
 GO
+
+
