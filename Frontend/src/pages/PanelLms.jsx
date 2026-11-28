@@ -3,6 +3,7 @@ import { api } from '../api/index.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import useAsync from '../hooks/useAsync.js'
 import { Cargando, ErrorCaja, Vacio } from '../components/ui.jsx'
+import IconoHomeClass from '../components/IconoHomeClass.jsx'
 
 export default function PanelLms() {
   const { usuario } = useAuth()
@@ -65,7 +66,7 @@ export default function PanelLms() {
               {cursos.slice(0, 6).map((curso) => (
                 <article key={curso.id} className="curso-tarjeta">
                   <div className="panel-curso-meta">
-                    <span className="panel-curso-icono"><i className="bi bi-journal-text" /></span>
+                    <span className="panel-curso-icono"><IconoHomeClass tipo="cursos" /></span>
                     <span className={`panel-curso-estado ${curso.estado?.toLowerCase() === 'publicado' ? 'publicado' : ''}`}>{curso.estado}</span>
                   </div>
                   <p className="demo-etiqueta">{curso.codigo}</p>
@@ -83,19 +84,19 @@ export default function PanelLms() {
 
           <section className="panel-accesos" aria-label="Accesos rápidos">
             <Link className="panel-acceso" to="/app/cursos">
-              <span className="panel-acceso-icono"><i className="bi bi-collection" /></span>
+              <span className="panel-acceso-icono"><IconoHomeClass tipo="contenido" /></span>
               <span><strong>Catálogo de cursos</strong><small>Consulta cursos y su contenido académico.</small></span>
               <i className="bi bi-arrow-right panel-acceso-flecha" />
             </Link>
             {datos.rol === 'admin' && (
               <Link className="panel-acceso" to="/app/categorias">
-                <span className="panel-acceso-icono panel-acceso-verde"><i className="bi bi-tags" /></span>
+                <span className="panel-acceso-icono panel-acceso-verde"><IconoHomeClass tipo="categorias" /></span>
                 <span><strong>Categorías</strong><small>Organiza categorías y subcategorías.</small></span>
                 <i className="bi bi-arrow-right panel-acceso-flecha" />
               </Link>
             )}
             <Link className="panel-acceso" to="/app/mensajes">
-              <span className="panel-acceso-icono panel-acceso-morado"><i className="bi bi-chat-dots" /></span>
+              <span className="panel-acceso-icono panel-acceso-morado"><IconoHomeClass tipo="comunicacion" /></span>
               <span><strong>Mensajes privados</strong><small>Comunícate con la comunidad académica.</small></span>
               <i className="bi bi-arrow-right panel-acceso-flecha" />
             </Link>

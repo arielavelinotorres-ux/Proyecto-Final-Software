@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import useTheme from '../hooks/useTheme.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import IconoHomeClass from './IconoHomeClass.jsx'
 
 // Barra de la parte pública (inicio e ingreso).
 export default function Navbar() {
@@ -20,7 +21,7 @@ export default function Navbar() {
   return (
     <header className="nav">
       <Link className="brand" to="/" aria-label="HomeClass, inicio">
-        <span className="brand-mark"><i className="bi bi-house-heart-fill" /></span>
+        <span className="brand-mark"><IconoHomeClass tipo="marca" /></span>
         <span>
           <strong className="brand-name">HomeClass</strong>
           <small>Entorno Académico</small>

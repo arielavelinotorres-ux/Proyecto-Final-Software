@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import IlustracionEstudio from '../components/IlustracionEstudio.jsx'
+import IconoHomeClass from '../components/IconoHomeClass.jsx'
 
 export default function Ingresar() {
   const { usuario, ingresar } = useAuth()
@@ -39,7 +40,7 @@ export default function Ingresar() {
 
       <div className="login-panel">
         <div className="login-marca">
-          <span className="login-marca-icono"><i className="bi bi-journal-bookmark-fill" aria-hidden="true" /></span>
+          <span className="login-marca-icono"><IconoHomeClass tipo="marca" /></span>
           <strong>HomeClass</strong>
         </div>
         <h1>¡Qué bueno verte!</h1>

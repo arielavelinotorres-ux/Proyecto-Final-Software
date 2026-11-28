@@ -7,9 +7,9 @@ export default function useTheme() {
   // Pasamos una FUNCIÓN para que lea localStorage solo la primera vez.
   const [tema, setTema] = useState(() => {
     try {
-      return localStorage.getItem('homeclass-tema') ?? 'light'
+      return localStorage.getItem('homeclass-tema') ?? 'dark'
     } catch {
-      return 'light' // si el navegador bloquea localStorage, seguimos sin guardar
+      return 'dark' // si el navegador bloquea localStorage, seguimos sin guardar
     }
   })
 

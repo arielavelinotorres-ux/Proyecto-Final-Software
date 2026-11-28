@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useAviso } from '../context/ToastContext.jsx'
 import useAsync from '../hooks/useAsync.js'
 import { Cargando, Confirmar, Encabezado, ErrorCaja, Modal, Vacio } from '../components/ui.jsx'
+import IconoHomeClass from '../components/IconoHomeClass.jsx'
 
 const CURSO_VACIO = {
   codigo: '',
@@ -75,7 +76,7 @@ export default function Cursos() {
           <article key={curso.id} className="curso-tarjeta curso-marketplace">
             <div className="curso-portada" aria-hidden="true">
               <span>{curso.categoria || 'Curso académico'}</span>
-              <i className="bi bi-journal-bookmark-fill" />
+              <IconoHomeClass tipo="cursos" />
             </div>
             <div className="curso-contenido">
               <div className="curso-meta"><span>{curso.codigo}</span><span className="curso-estado">{curso.estado}</span></div>
