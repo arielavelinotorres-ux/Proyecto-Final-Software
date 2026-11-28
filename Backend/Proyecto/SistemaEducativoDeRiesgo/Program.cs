@@ -11,6 +11,11 @@ using SistemaEducativoDeRiesgo.Application.Interfaces.Comunicacion;
 using SistemaEducativoDeRiesgo.Application.Services.Comunicacion;
 using SistemaEducativoDeRiesgo.Domain.Interfaces.Comunicacion;
 using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence.Comunicacion;
+using SistemaEducativoDeRiesgo.Application.Interfaces.Evaluaciones;
+using SistemaEducativoDeRiesgo.Application.Services.Evaluaciones;
+using SistemaEducativoDeRiesgo.Domain.Interfaces.Evaluaciones;
+using SistemaEducativoDeRiesgo.Insfrasctuture.Persistence.Evaluaciones;
+
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -50,6 +55,20 @@ builder.Services.AddScoped<IPublicacionForoService, PublicacionForoService>();
 builder.Services.AddScoped<IMensajePrivadoService, MensajePrivadoService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 
+// Módulo Evaluaciones - Repositorios
+builder.Services.AddScoped<IEvaluacionRepository, EvaluacionRepository>();
+builder.Services.AddScoped<IEntregaTareaRepository, EntregaTareaRepository>();
+builder.Services.AddScoped<IPreguntaRepository, PreguntaRepository>();
+builder.Services.AddScoped<IOpcionPreguntaRepository, OpcionPreguntaRepository>();
+builder.Services.AddScoped<IRespuestaEstudianteRepository, RespuestaEstudianteRepository>();
+
+// Módulo Evaluaciones - Servicios
+builder.Services.AddScoped<IEvaluacionService, EvaluacionService>();
+builder.Services.AddScoped<IEntregaTareaService, EntregaTareaService>();
+builder.Services.AddScoped<IPreguntaService, PreguntaService>();
+builder.Services.AddScoped<IOpcionPreguntaService, OpcionPreguntaService>();
+builder.Services.AddScoped<IRespuestaEstudianteService, RespuestaEstudianteService>();
+
 var app = builder.Build();
 
 app.UseMiddleware<SqlExceptionMiddleware>();
@@ -62,5 +81,6 @@ if (app.Environment.IsDevelopment())
 // Mapeo de Endpoints
 app.MapUsuariosEndpoints();
 app.MapComunicacionEndpoints();
+app.MapEvaluacionesEndpoints();
 
 app.Run();

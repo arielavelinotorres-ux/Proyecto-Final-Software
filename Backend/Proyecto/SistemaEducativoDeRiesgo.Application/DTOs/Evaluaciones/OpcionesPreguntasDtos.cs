@@ -4,7 +4,21 @@ using System.Text;
 
 namespace SistemaEducativoDeRiesgo.Application.DTOs.Evaluaciones
 {
-    internal class OpcionesPreguntasDtos
-    {
-    }
+    public record CrearOpcionPreguntaRequest(
+        int PreguntaId,
+        string TextoOpcion,
+        bool EsCorrecta,
+        int Orden);
+
+    public record ActualizarOpcionPreguntaRequest(
+        string TextoOpcion,
+        bool EsCorrecta,
+        int Orden);
+
+    public record OpcionPreguntaResponse(
+        int Id,
+        int PreguntaId,
+        string TextoOpcion,
+        bool EsCorrecta,
+        int Orden);
 }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using SistemaEducativoDeRiesgo.Application.DTOs;
 using SistemaEducativoDeRiesgo.Application.DTOs.Usuarios;
 using SistemaEducativoDeRiesgo.Application.DTOs.Comunicacion;
+using SistemaEducativoDeRiesgo.Application.DTOs.Evaluaciones;
 
 namespace SistemaEducativoDeRiesgo.Application.Serialization
 {
@@ -58,6 +59,33 @@ namespace SistemaEducativoDeRiesgo.Application.Serialization
     [JsonSerializable(typeof(CrearNotificacionRequest))]
     [JsonSerializable(typeof(NotificacionResponse))]
     [JsonSerializable(typeof(List<NotificacionResponse>))]
+
+
+    // Módulo Evaluaciones
+    [JsonSerializable(typeof(CrearEvaluacionRequest))]
+    [JsonSerializable(typeof(ActualizarEvaluacionRequest))]
+    [JsonSerializable(typeof(EvaluacionResponse))]
+    [JsonSerializable(typeof(List<EvaluacionResponse>))]
+
+    [JsonSerializable(typeof(CrearEntregaTareaRequest))]
+    [JsonSerializable(typeof(ActualizarEntregaTareaRequest))]
+    [JsonSerializable(typeof(EntregaTareaResponse))]
+    [JsonSerializable(typeof(List<EntregaTareaResponse>))]
+
+    [JsonSerializable(typeof(CrearPreguntaRequest))]
+    [JsonSerializable(typeof(ActualizarPreguntaRequest))]
+    [JsonSerializable(typeof(PreguntaResponse))]
+    [JsonSerializable(typeof(List<PreguntaResponse>))]
+
+    [JsonSerializable(typeof(CrearOpcionPreguntaRequest))]
+    [JsonSerializable(typeof(ActualizarOpcionPreguntaRequest))]
+    [JsonSerializable(typeof(OpcionPreguntaResponse))]
+    [JsonSerializable(typeof(List<OpcionPreguntaResponse>))]
+
+    [JsonSerializable(typeof(CrearRespuestaEstudianteRequest))]
+    [JsonSerializable(typeof(CalificarRespuestaEstudianteRequest))]
+    [JsonSerializable(typeof(RespuestaEstudianteResponse))]
+    [JsonSerializable(typeof(List<RespuestaEstudianteResponse>))]
 
     public partial class AppJsonSerializerContext : JsonSerializerContext
     {
