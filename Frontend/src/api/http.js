@@ -1,12 +1,9 @@
 // Única implementación de datos: habla con el backend por HTTP/JSON.
 // Qué debe devolver cada endpoint está documentado en docs/API.md.
 import { API_URL } from '../config.js'
-import { leerToken } from './sesion.js'
 
 async function pedir(metodo, ruta, { cuerpo } = {}) {
   const cabeceras = {}
-  const token = leerToken()
-  if (token) cabeceras.Authorization = `Bearer ${token}`
   let body
   if (cuerpo !== undefined) {
     cabeceras['Content-Type'] = 'application/json'
@@ -17,18 +14,15 @@ async function pedir(metodo, ruta, { cuerpo } = {}) {
   try {
     res = await fetch(`${API_URL}${ruta}`, { method: metodo, headers: cabeceras, body })
   } catch {
-    throw new Error('No se pudo conectar con el servidor. Revisa tu conexión.')
+    throw new Error('No se pudo conectar con la API. Comprueba que el backend esté iniciado y que VITE_PROXY apunte a su dirección.')
   }
 
   if (!res.ok) {
-    const tipoContenido = res.headers.get('Content-Type') || ''
-    if (res.status === 404 && !tipoContenido.includes('application/json')) {
-      throw new Error('El backend todavía no está disponible. Configura VITE_PROXY cuando esté construido.')
-    }
-    // El backend debe responder { "mensaje": "..." } en los errores.
     let mensaje = `Error ${res.status}`
-    try { mensaje = (await res.json()).mensaje ?? mensaje } catch { /* sin cuerpo */ }
-    if (res.status === 401) mensaje = mensaje === `Error 401` ? 'Tu sesión expiró. Ingresa de nuevo.' : mensaje
+    try {
+      const error = await res.json()
+      mensaje = error.mensaje ?? error.detail ?? error.title ?? mensaje
+    } catch { /* La respuesta puede no incluir JSON. */ }
     throw new Error(mensaje)
   }
   return res.status === 204 ? undefined : res.json()
@@ -37,50 +31,63 @@ async function pedir(metodo, ruta, { cuerpo } = {}) {
 const get = (r) => pedir('GET', r)
 const post = (r, cuerpo) => pedir('POST', r, { cuerpo })
 const put = (r, cuerpo) => pedir('PUT', r, { cuerpo })
+const patch = (r, cuerpo) => pedir('PATCH', r, { cuerpo })
 const del = (r) => pedir('DELETE', r)
 
 export const httpApi = {
   auth: {
-    login: (correo, clave) => post('/auth/login', { correo, clave }),
-    sesion: () => get('/auth/sesion'),
-    salir: () => post('/auth/salir', {}),
+    login: (correo, password) => post('/usuarios/login', { correo, password }),
   },
-  dashboard: { obtener: () => get('/dashboard') },
-  catalogo: {
-    categorias: () => get('/categorias'),
-    crearCategoria: (d) => post('/categorias', d),
-    actualizarCategoria: (id, d) => put(`/categorias/${id}`, d),
-    eliminarCategoria: (id) => del(`/categorias/${id}`),
-    subcategorias: () => get('/subcategorias'),
-    crearSubcategoria: (d) => post('/subcategorias', d),
-    actualizarSubcategoria: (id, d) => put(`/subcategorias/${id}`, d),
-    eliminarSubcategoria: (id) => del(`/subcategorias/${id}`),
+  usuarios: {
+    listar: () => get('/usuarios'),
+    crear: (datos) => post('/usuarios/', datos),
+    actualizarPerfil: (id, datos) => put(`/usuarios/${id}/perfil`, datos),
+    actualizarPassword: (id, nuevoPassword) => put(`/usuarios/${id}/password`, { nuevoPassword }),
+    activar: (id) => patch(`/usuarios/${id}/activar`),
+    desactivar: (id) => patch(`/usuarios/${id}/desactivar`),
+    cerrarSesiones: (id) => post(`/usuarios/${id}/cerrar-sesiones`, {}),
   },
-  usuarios: { listar: (rol) => get(rol ? `/usuarios?rol=${encodeURIComponent(rol)}` : '/usuarios') },
-  cursos: {
-    listar: () => get('/cursos'),
-    obtener: (id) => get(`/cursos/${id}`),
-    crear: (d) => post('/cursos', d),
-    actualizar: (id, d) => put(`/cursos/${id}`, d),
-    eliminar: (id) => del(`/cursos/${id}`),
-    matricular: (cursoId, estudianteId) => post(`/cursos/${cursoId}/estudiantes`, { estudianteId }),
-    desmatricular: (cursoId, estudianteId) => del(`/cursos/${cursoId}/estudiantes/${estudianteId}`),
-    actualizarMatricula: (cursoId, estudianteId, estado) => put(`/cursos/${cursoId}/estudiantes/${estudianteId}`, { estado }),
-    contenido: (id) => get(`/cursos/${id}/contenido`),
-    actualizarProgreso: (leccionId, completado) => put(`/lecciones/${leccionId}/progreso`, { completado }),
-    foros: (id) => get(`/cursos/${id}/foros`),
-    crearForo: (id, d) => post(`/cursos/${id}/foros`, d),
-    actualizarForo: (id, d) => put(`/foros/${id}`, d),
-    archivarForo: (id) => del(`/foros/${id}`),
+  docentes: {
+    listar: () => get('/docentes/'),
+    crear: (datos) => post('/docentes/', datos),
+    actualizar: (id, datos) => put(`/docentes/${id}`, datos),
+    eliminar: (id) => del(`/docentes/${id}`),
+  },
+  estudiantes: {
+    listar: () => get('/estudiantes/'),
+    obtenerPorUsuario: (usuarioId) => get(`/estudiantes/usuario/${usuarioId}`),
+    crear: (datos) => post('/estudiantes/', datos),
+    actualizar: (id, datos) => put(`/estudiantes/${id}`, datos),
+    eliminar: (id) => del(`/estudiantes/${id}`),
+  },
+  recuperacionPassword: {
+    generar: (datos) => post('/recuperacion-password/generar', datos),
+    validar: (token) => post('/recuperacion-password/validar', { token }),
+    marcarUsado: (id) => patch(`/recuperacion-password/${id}/usar`),
   },
   foros: {
-    publicaciones: (id) => get(`/foros/${id}/publicaciones`),
-    publicar: (id, d) => post(`/foros/${id}/publicaciones`, d),
+    listarPorCurso: (cursoId) => get(`/foros/curso/${cursoId}`),
+    crear: (datos) => post('/foros/', datos),
+    actualizar: (id, datos) => put(`/foros/${id}`, datos),
+    archivar: (id) => patch(`/foros/${id}/archivar`),
+  },
+  publicaciones: {
+    listarPorForo: (foroId) => get(`/publicaciones-foro/foro/${foroId}`),
+    crear: (datos) => post('/publicaciones-foro/', datos),
+    actualizar: (id, datos) => put(`/publicaciones-foro/${id}`, datos),
+    eliminar: (id) => del(`/publicaciones-foro/${id}`),
   },
   mensajes: {
-    listar: () => get('/mensajes'),
-    contactos: () => get('/contactos'),
-    enviar: (d) => post('/mensajes', d),
-    marcarLeido: (id) => put(`/mensajes/${id}/leido`, {}),
+    recibidos: (usuarioId) => get(`/mensajes-privados/recibidos/${usuarioId}`),
+    enviados: (usuarioId) => get(`/mensajes-privados/enviados/${usuarioId}`),
+    enviar: (datos) => post('/mensajes-privados/', datos),
+    marcarLeido: (id) => patch(`/mensajes-privados/${id}/leer`),
+  },
+  notificaciones: {
+    listarPorUsuario: (usuarioId) => get(`/notificaciones/usuario/${usuarioId}`),
+    crear: (datos) => post('/notificaciones/', datos),
+    marcarLeida: (id) => patch(`/notificaciones/${id}/leer`),
+    marcarTodasLeidas: (usuarioId) => patch(`/notificaciones/usuario/${usuarioId}/leer-todas`),
+    eliminar: (id) => del(`/notificaciones/${id}`),
   },
 }

@@ -7,9 +7,6 @@ import Inicio from './pages/Inicio.jsx'
 import { ContactoPage, FuncionesPage, GestionesPage, HistoriaPage, NosotrosPage } from './pages/Publicas.jsx'
 import Ingresar from './pages/Ingresar.jsx'
 import NoEncontrada from './pages/NoEncontrada.jsx'
-import Cursos from './pages/Cursos.jsx'
-import CursoDetalle from './pages/CursoDetalle.jsx'
-import Categorias from './pages/Categorias.jsx'
 import Mensajes from './pages/Mensajes.jsx'
 import PanelLms from './pages/PanelLms.jsx'
 // Estructura del Nav
@@ -29,12 +26,7 @@ export default function App() {
       <Route path="app" element={<RutaProtegida />}>
         <Route element={<AppLayout />}>
           <Route index element={<PanelLms />} />
-          <Route path="cursos" element={<Cursos />} />
-          <Route path="cursos/:id" element={<CursoDetalle />} />
           <Route path="mensajes" element={<Mensajes />} />
-          <Route element={<RutaProtegida roles={['admin']} />}>
-            <Route path="categorias" element={<Categorias />} />
-          </Route>
         </Route>
       </Route>
 

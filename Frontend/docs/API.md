@@ -1,76 +1,67 @@
-# API del sistema
+# Integración frontend/API
 
-El frontend envía solicitudes HTTP al backend ASP.NET. El backend accede a SQL Server en la base existente `lms_db`; no hay acceso SQL desde el navegador.
+El frontend consume la Minimal API ASP.NET mediante `fetch`; solo el backend accede a SQL Server. La capa HTTP central está en [`src/api/http.js`](../src/api/http.js).
 
-- Base de rutas: `VITE_API_URL` (por defecto `/api`).
-- Autenticación: `Authorization: Bearer <token>`.
-- JSON en solicitudes/respuestas, salvo respuestas `204`.
-- Errores: `{ "mensaje": "..." }`.
-- Roles de la API: `admin`, `docente`, `estudiante`.
+## Configuración de conexión
 
-## Sesión
+- El prefijo por defecto es `VITE_API_URL=/api` (archivo [`src/config.js`](../src/config.js)).
+- En desarrollo, Vite reenvía `/api` al `VITE_PROXY` configurado en [`vite.config.js`](../vite.config.js). El valor predeterminado es `http://localhost:5296`, puerto del perfil HTTP en `Backend/Proyecto/SistemaEducativoDeRiesgo/Properties/launchSettings.json`.
+- Para iniciar el backend: desde su proyecto, ejecutar `dotnet run --launch-profile http`; para el frontend, ejecutar `npm run dev` dentro de `Frontend`.
+- En producción, el frontend debe servirse bajo el mismo origen que la API para conservar `/api`. El backend actual no configura CORS; no se debe apuntar el navegador a un host separado esperando que la conexión funcione.
+- Las solicitudes y respuestas usan JSON. El cliente acepta respuestas vacías `204` y errores JSON con `mensaje`, `detail` o `title`.
 
-| Método | Ruta | Respuesta |
+## Contratos publicados por el backend actual
+
+Las rutas siguientes llevan el prefijo `/api`.
+
+### Usuarios y credenciales
+
+| Método | Ruta | Solicitud/respuesta |
 |---|---|---|
-| `POST` | `/auth/login` | `{ token, usuario }`; autentica cualquier cuenta activa de `Usuarios.usuarios` con sus credenciales y guarda una sesión de 12 horas en `Usuarios.sesiones`. El rol se obtiene de la base de datos. |
-| `GET` | `/auth/sesion` | Usuario asociado a una sesión válida. |
-| `POST` | `/auth/salir` | `204`; elimina la sesión actual. |
+| `POST` | `/usuarios/login` | `{ correo, password }` → `{ id, rolId, rolNombre, correo, activo }`; credenciales inválidas/inactivas devuelven `401` y `{ mensaje }`. |
+| `GET` | `/usuarios/` | Lista `{ id, rolId, rolNombre, correo, activo, creadoEn, ultimoAcceso }`. |
+| `POST` | `/usuarios/` | `{ rolId, correo, password }` → `201` con `{ id }`. |
+| `PUT` | `/usuarios/{id}/perfil` | `{ rolId, correo }`. |
+| `PUT` | `/usuarios/{id}/password` | `{ nuevoPassword }`. |
+| `PATCH` | `/usuarios/{id}/activar` | Activa la cuenta. |
+| `PATCH` | `/usuarios/{id}/desactivar` | Desactiva la cuenta. |
+| `POST` | `/usuarios/{id}/cerrar-sesiones` | Cierra las sesiones del usuario almacenadas por el backend. |
 
-El backend verifica los hashes `pbkdf2-sha256` que genera la aplicación y SHA-256 heredado. No se ofrecen flujos de restablecimiento porque el esquema actual no incluye un procedimiento de restablecimiento/envío.
+Los perfiles relacionados están disponibles en `GET/POST /docentes/`, `PUT/DELETE /docentes/{id}` y `GET/POST /estudiantes/`, `GET /estudiantes/usuario/{usuarioId}`, `PUT/DELETE /estudiantes/{id}`. Los DTO de creación/actualización se detallan en `Backend/Proyecto/SistemaEducativoDeRiesgo.Application/DTOs/Usuarios/DocenteDtos.cs` y `EstudianteDtos.cs`.
 
-## Catálogo
+Recuperación de contraseña: `POST /recuperacion-password/generar` con `{ usuarioId, minutosExpiracion? }`; `POST /recuperacion-password/validar` con `{ token }`; `PATCH /recuperacion-password/{id}/usar`. No hay flujo de entrega del token por correo en la interfaz.
 
-| Método | Ruta | Operación |
+El login no entrega token, cookie ni identificador de sesión. El frontend adapta `rolNombre` (Administrador/Docente/Estudiante) a los valores usados por su interfaz y conserva el perfil en `sessionStorage` hasta cerrar la pestaña o salir. **Este estado local no autentica ni autoriza solicitudes posteriores.**
+
+### Comunicación
+
+| Método | Ruta | Solicitud/respuesta |
 |---|---|---|
-| `GET` | `/categorias` | Lista categorías con `Academico.sp_ConsultarCategorias`. |
-| `POST` | `/categorias` | `{ nombre, descripcion, activo }`; administra con `Academico.sp_InsertarCategoria`. |
-| `PUT` | `/categorias/{id}` | Actualiza con `Academico.sp_ActualizarCategoria`. |
-| `DELETE` | `/categorias/{id}` | Elimina con `Academico.sp_EliminarCategoria`; devuelve `409` si tiene dependencias. |
-| `GET` | `/subcategorias` | Lista subcategorías y sus categorías con `Academico.sp_ConsultarSubcategorias`. |
-| `POST` | `/subcategorias` | `{ categoriaId, nombre, descripcion, activo }`. |
-| `PUT` | `/subcategorias/{id}` | Actualiza la subcategoría. |
-| `DELETE` | `/subcategorias/{id}` | Elimina la subcategoría; devuelve `409` si tiene cursos asociados. |
+| `POST` | `/mensajes-privados/` | `{ emisorId, receptorId, asunto, contenido }` → `201` con `{ id }`. |
+| `GET` | `/mensajes-privados/recibidos/{receptorId}` | Lista `{ id, emisorId, emisorNombre, receptorId, asunto, contenido, leido, fechaEnvio }`. |
+| `GET` | `/mensajes-privados/enviados/{emisorId}` | Lista los mensajes enviados por ese usuario. |
+| `PATCH` | `/mensajes-privados/{id}/leer` | Marca como leído. |
+| `DELETE` | `/mensajes-privados/{id}` | Elimina un mensaje. |
+| `GET` | `/foros/curso/{cursoId}` | Lista foros del curso. |
+| `POST` | `/foros/` | `{ cursoId, titulo, descripcion }` → `201` con `{ id }`. |
+| `PUT` | `/foros/{id}` | `{ titulo, descripcion, estado }`. |
+| `PATCH` | `/foros/{id}/archivar` | Archiva el foro. |
+| `GET` | `/publicaciones-foro/foro/{foroId}` | Lista publicaciones del foro. |
+| `POST` | `/publicaciones-foro/` | `{ foroId, usuarioId, publicacionPadreId, contenido }` → `201` con `{ id }`. |
+| `PUT` | `/publicaciones-foro/{id}` | `{ contenido }`. |
+| `DELETE` | `/publicaciones-foro/{id}` | Elimina una publicación. |
+| `GET` | `/notificaciones/usuario/{usuarioId}` | Lista notificaciones del usuario. |
+| `PATCH` | `/notificaciones/{id}/leer` | Marca una notificación como leída. |
+| `PATCH` | `/notificaciones/usuario/{usuarioId}/leer-todas` | Marca todas como leídas. |
+| `POST` | `/notificaciones/` | `{ usuarioId, titulo, mensaje }` → `201` con `{ id }`. |
+| `DELETE` | `/notificaciones/{id}` | Elimina una notificación. |
 
-Las operaciones de escritura del catálogo requieren el rol `admin`.
+La pantalla de mensajes usa `id` y `rolNombre` de `/usuarios/` para destinatarios, pasa explícitamente emisor/receptor al crear un mensaje y consume los nombres reales de las propiedades camelCase devueltas por la API.
 
-## Usuarios y cursos
+## Límites deliberados y seguridad
 
-| Método | Ruta | Operación |
-|---|---|---|
-| `GET` | `/usuarios?rol=docente` | Lista usuarios activos para administración; los roles permitidos son `admin`, `docente` y `estudiante`. |
-| `GET` | `/dashboard` | Resumen con los cursos visibles al usuario. |
-| `GET` | `/cursos` | Cursos globales para administración, propios para docentes y matriculados para estudiantes. |
-| `GET` | `/cursos/{id}` | Curso y, para administración/docente, estudiantes matriculados. |
-| `POST` | `/cursos` | `{ codigo, nombre, descripcion, docenteId, subcategoriaId, imagenPortada?, estado? }`; usa `Academico.sp_InsertarCurso`. |
-| `PUT` | `/cursos/{id}` | Actualiza el curso con `Academico.sp_ActualizarCurso`. |
-| `DELETE` | `/cursos/{id}` | Usa `Academico.sp_EliminarCurso`; devuelve `409` si hay dependencias. |
-| `POST` | `/cursos/{id}/estudiantes` | `{ estudianteId }`; matricula con `Academico.sp_InsertarMatricula`. |
-| `DELETE` | `/cursos/{id}/estudiantes/{estudianteId}` | Elimina la matrícula con `Academico.sp_EliminarMatricula`. |
-| `PUT` | `/cursos/{id}/estudiantes/{estudianteId}` | `{ estado: "Activo"|"Completado"|"Cancelado" }`; actualiza con `Academico.sp_ActualizarMatricula`. |
-| `GET` | `/cursos/{id}/contenido` | Secciones, lecciones, recursos y estado de progreso del estudiante actual. |
-| `PUT` | `/lecciones/{id}/progreso` | `{ completado }`; estudiantes actualizan `Monitoreo.progreso_lecciones`. |
-
-Los identificadores públicos de docentes/estudiantes son los de `Usuarios.usuarios`; el backend los traduce a los IDs de perfil requeridos por los procedimientos de cursos y matrículas.
-
-## Comunicación
-
-| Método | Ruta | Operación |
-|---|---|---|
-| `GET` | `/cursos/{id}/foros` | Lista foros con `Comunicacion.SP_ListarForos`. |
-| `POST` | `/cursos/{id}/foros` | `{ titulo, mensaje }`; `mensaje` se guarda como descripción (máximo 100 caracteres) mediante `Comunicacion.SP_InsertarForo`. Solo el docente del curso crea foros. |
-| `PUT` | `/foros/{id}` | `{ titulo, descripcion, estado }`; actualiza con `Comunicacion.SP_ActualizarForo`. |
-| `DELETE` | `/foros/{id}` | Archiva con `Comunicacion.SP_DesactivarForo`. |
-| `GET` | `/foros/{id}/publicaciones` | Lista publicaciones del foro. |
-| `POST` | `/foros/{id}/publicaciones` | `{ contenido, publicacionPadreId? }`; registra una publicación o respuesta. |
-| `GET` | `/mensajes` | Bandeja recibida desde `Comunicacion.mensajes_privados`. |
-| `POST` | `/mensajes` | `{ receptorId, asunto, contenido }`; guarda en `Comunicacion.mensajes_privados` (contenido máximo 200 caracteres). |
-| `PUT` | `/mensajes/{id}/leido` | Marca como leído usando `Comunicacion.SP_ActualizarMensajePrivado`. |
-| `GET` | `/contactos` | Lista nombres y roles activos para elegir destinatarios; no devuelve correos. |
-
-Las lecturas de cursos, foros y publicaciones se limitan a cursos accesibles para el usuario.
-
-Los scripts de `SP_ListarMensajesPrivados` y `SP_InsertarMensajePrivado` consultan/escriben una columna `activo` que no existe en la definición de `Comunicacion.mensajes_privados`; por eso el backend usa la tabla tal como está definida y no altera el esquema.
-
-## Límite de la integración actual
-
-La interfaz expone únicamente operaciones implementadas en la API activa y conectadas al esquema SQL. No hay rutas activas para asistencia, calificaciones, evaluaciones, entregas ni materiales. Además, los scripts de evaluaciones son incompletos: `evaluaciones.sql` vuelve a crear `Evaluaciones.preguntas` y no define la tabla padre `Evaluaciones.evaluaciones` que requieren las entregas. No se simulan resultados ni se guardan datos de esas funciones en el navegador.
+- El backend actual **no publica endpoints de cursos, dashboard ni categorías/subcategorías**. Por eso esas vistas no están conectadas ni aparecen en el panel activo; las pantallas heredadas quedan fuera de navegación.
+- La API tampoco tiene middleware/policies de autorización visibles en `Program.cs` ni aplica autenticación en estos endpoints. En particular, el cliente puede modificar el usuario guardado y enviar otros `emisorId`/IDs. La protección de rutas del frontend es solo UX, no control de acceso.
+- No desplegar datos reales ni considerar seguro este flujo hasta que el backend autentique solicitudes y derive el usuario/rol de una credencial validada. Hacerlo solo en el frontend no corrige la vulnerabilidad.
+- La API actual no configura CORS. No se debe resolver cambiando a una URL de API cross-origin desde el navegador; requiere mismo origen o configuración del backend (fuera del alcance solicitado).
+- Los endpoints de cursos, asistencia, calificaciones, evaluaciones, entregas y materiales no están en esta API; no se generan respuestas simuladas.

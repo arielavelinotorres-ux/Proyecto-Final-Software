@@ -8,18 +8,24 @@ import { Cargando, Encabezado, ErrorCaja, Vacio } from '../components/ui.jsx'
 export default function Mensajes() {
   const { usuario } = useAuth()
   const avisar = useAviso()
-  const { datos: mensajes, cargando, error, recargar } = useAsync(() => api.mensajes.listar(), [])
-  const { datos: usuarios, error: errorContactos, recargar: recargarContactos } = useAsync(() => api.mensajes.contactos(), [])
+  const { datos: mensajes, cargando, error, recargar } = useAsync(() => api.mensajes.recibidos(usuario.id), [usuario.id])
+  const { datos: usuarios, cargando: cargandoContactos, error: errorContactos, recargar: recargarContactos } = useAsync(() => api.usuarios.listar(), [])
   const [form, setForm] = useState({ receptorId: '', asunto: '', contenido: '' })
   const [errorEnvio, setErrorEnvio] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const contactos = (usuarios ?? []).filter((item) => item.id !== usuario.id && item.activo)
 
   async function enviar(event) {
     event.preventDefault()
     setEnviando(true)
     setErrorEnvio(null)
     try {
-      await api.mensajes.enviar({ ...form, receptorId: Number(form.receptorId) })
+      await api.mensajes.enviar({
+        emisorId: usuario.id,
+        receptorId: Number(form.receptorId),
+        asunto: form.asunto.trim() || null,
+        contenido: form.contenido.trim(),
+      })
       setForm({ receptorId: '', asunto: '', contenido: '' })
       avisar('Mensaje enviado.')
       recargar()
@@ -41,16 +47,16 @@ export default function Mensajes() {
 
   return (
     <>
-      <Encabezado titulo="Mensajes privados" subtitulo="Bandeja y envíos guardados en Comunicacion.mensajes_privados." />
+      <Encabezado titulo="Mensajes privados" subtitulo="Bandeja y envíos conectados con la API de comunicación." />
       <section className="tarjeta">
         <h2>Enviar mensaje</h2>
         <form className="form" onSubmit={enviar}>
           <div className="campo">
             <label htmlFor="mensaje-receptor">Destinatario</label>
-            <select id="mensaje-receptor" value={form.receptorId} onChange={(event) => setForm({ ...form, receptorId: event.target.value })} required>
+            <select id="mensaje-receptor" value={form.receptorId} onChange={(event) => setForm({ ...form, receptorId: event.target.value })} disabled={cargandoContactos || Boolean(errorContactos)} required>
               <option value="">Selecciona un usuario</option>
-              {usuarios?.filter((item) => item.id !== usuario.id).map((item) => (
-                <option key={item.id} value={item.id}>{item.nombre} · {item.rol}</option>
+              {contactos.map((item) => (
+                <option key={item.id} value={item.id}>{item.correo} · {item.rolNombre}</option>
               ))}
             </select>
           </div>
@@ -58,7 +64,7 @@ export default function Mensajes() {
           <div className="campo"><label htmlFor="mensaje-asunto">Asunto</label><input id="mensaje-asunto" maxLength="150" value={form.asunto} onChange={(event) => setForm({ ...form, asunto: event.target.value })} /></div>
           <div className="campo"><label htmlFor="mensaje-contenido">Mensaje (máximo 200 caracteres)</label><textarea id="mensaje-contenido" maxLength="200" value={form.contenido} onChange={(event) => setForm({ ...form, contenido: event.target.value })} required /></div>
           {errorEnvio && <ErrorCaja mensaje={errorEnvio} />}
-          <button type="submit" className="btn btn-primario" disabled={enviando}>{enviando ? 'Enviando…' : 'Enviar'}</button>
+          <button type="submit" className="btn btn-primario" disabled={enviando || !form.receptorId || contactos.length === 0}>{enviando ? 'Enviando…' : 'Enviar'}</button>
         </form>
       </section>
       <section className="tarjeta">
@@ -71,7 +77,7 @@ export default function Mensajes() {
             <div>
               <strong>{mensaje.asunto || 'Sin asunto'}</strong>
               <p>{mensaje.contenido}</p>
-              <small className="suave">De {mensaje.remitente} · {new Date(mensaje.fecha_envio).toLocaleString()}</small>
+              <small className="suave">De {mensaje.emisorNombre} · {new Date(mensaje.fechaEnvio).toLocaleString()}</small>
             </div>
             {!mensaje.leido && <button className="btn btn-claro btn-chico" type="button" onClick={() => marcarLeido(mensaje.id)}>Marcar leído</button>}
           </li>

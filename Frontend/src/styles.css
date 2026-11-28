@@ -95,6 +95,7 @@ a { color: var(--link); }
 .msg { padding: 8px 12px; border-radius: 10px; font-size: .92rem; margin-bottom: 12px; }
 .msg-ok { background: var(--bajo-bg); color: var(--bajo-tx); }
 .msg-error { background: var(--alto-bg); color: var(--alto-tx); }
+.msg-info { background: var(--info-bg); color: var(--info-tx); }
 
 .seccion { padding-block: 64px 8px; }
 .titulo-seccion { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }

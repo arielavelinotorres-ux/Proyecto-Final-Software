@@ -9,15 +9,7 @@ export default function AppLayout() {
   const { tema, alternar } = useTheme()
   const navegar = useNavigate()
   const ubicacion = useLocation()
-  const pagina = ubicacion.pathname.startsWith('/app/categorias')
-    ? 'Categorías'
-    : ubicacion.pathname.startsWith('/app/mensajes')
-      ? 'Mensajes'
-      : ubicacion.pathname.startsWith('/app/cursos/')
-        ? 'Curso'
-        : ubicacion.pathname.startsWith('/app/cursos')
-          ? 'Cursos'
-          : 'Resumen'
+  const pagina = ubicacion.pathname.startsWith('/app/mensajes') ? 'Mensajes' : 'Resumen'
 
   async function alSalir() {
     try {
@@ -41,14 +33,6 @@ export default function AppLayout() {
           <NavLink to="/app" end className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
             <i className="bi bi-speedometer2" /><span>Resumen</span>
           </NavLink>
-          <NavLink to="/app/cursos" className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
-            <i className="bi bi-journal-bookmark" /><span>{usuario.rol === 'admin' ? 'Cursos' : 'Mis cursos'}</span>
-          </NavLink>
-          {usuario.rol === 'admin' && (
-            <NavLink to="/app/categorias" className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
-              <i className="bi bi-collection" /><span>Categorías</span>
-            </NavLink>
-          )}
           <NavLink to="/app/mensajes" className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
             <i className="bi bi-envelope" /><span>Mensajes</span>
           </NavLink>
