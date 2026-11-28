@@ -39,7 +39,7 @@ export default function Ingresar() {
 
       <div className="login-panel">
         <div className="login-marca">
-          <span className="login-marca-icono"><i className="bi bi-journal-bookmark-fill" aria-hidden="true" /></span>
+          <span className="login-marca-icono"><img className="homeclass-logo-image" src="/homeclass-logo.jpg" alt="" /></span>
           <strong>HomeClass</strong>
         </div>
         <h1>¡Qué bueno verte!</h1>

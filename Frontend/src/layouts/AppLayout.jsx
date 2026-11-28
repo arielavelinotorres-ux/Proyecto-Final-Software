@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAviso } from '../context/ToastContext.jsx'
 import useTheme from '../hooks/useTheme.js'
+import IconoHomeClass from '../components/IconoHomeClass.jsx'
 
 export default function AppLayout() {
   const { usuario, salir } = useAuth()
@@ -25,16 +26,16 @@ export default function AppLayout() {
       <a className="saltar" href="#contenido">Saltar al contenido</a>
       <aside className="lateral">
         <NavLink to="/" className="brand brand-lateral" aria-label="HomeClass, ir al inicio">
-          <span className="brand-mark"><i className="bi bi-house-heart-fill" /></span>
+          <span className="brand-mark"><img className="homeclass-logo-image" src="/homeclass-logo.jpg" alt="" /></span>
           <span><strong className="brand-name">HomeClass</strong><small>Entorno académico</small></span>
         </NavLink>
         <p className="menu-etiqueta">MENÚ PRINCIPAL</p>
         <nav aria-label="Principal" className="menu">
           <NavLink to="/app" end className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
-            <i className="bi bi-speedometer2" /><span>Resumen</span>
+            <IconoHomeClass tipo="resumen" /><span>Resumen</span>
           </NavLink>
           <NavLink to="/app/mensajes" className={({ isActive }) => isActive ? 'menu-item activo' : 'menu-item'}>
-            <i className="bi bi-envelope" /><span>Mensajes</span>
+            <IconoHomeClass tipo="comunicacion" /><span>Mensajes</span>
           </NavLink>
         </nav>
         <div className="lateral-pie">
@@ -60,7 +61,9 @@ export default function AppLayout() {
           </div>
         </header>
         <main id="contenido" className="contenido" tabIndex={-1}>
-          <Outlet />
+          <div key={ubicacion.pathname} className="page-transition">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

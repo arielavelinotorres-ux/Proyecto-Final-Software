@@ -37,9 +37,8 @@ Frontend/
    ├─ context/             AuthContext.jsx · ToastContext.jsx
    ├─ hooks/               useAsync.js · useTheme.js
    ├─ layouts/             PublicLayout.jsx · AppLayout.jsx
-   ├─ components/          ui.jsx, Navbar, Footer, Hero, Features, …
+   ├─ components/          ui.jsx, Navbar, Footer, Hero, …
    ├─ pages/               Pantallas activas y heredadas
-   ├─ data/                funcionalidades.js
    └─ utils/               formato, permisos, archivos, calculos
 
 2.2 Responsabilidad de cada carpeta
@@ -75,11 +74,6 @@ Frontend/
   Archivos clave: Cursos.jsx, CursoDetalle.jsx, Mensajes.jsx
 
 [7]
-  Carpeta: data/
-  Qué contiene: Texto estático de la página Funciones.
-  Archivos clave: funcionalidades.js
-
-[8]
   Carpeta: utils/
   Qué contiene: Funciones auxiliares para fechas, permisos, validación de archivos y cálculos de riesgo.
   Archivos clave: formato.js, permisos.js
@@ -106,7 +100,7 @@ Antes del montaje, main.jsx elimina datos residuales de la versión de demostrac
   Acceso: Público. Portada con enlaces a las demás secciones.
 
 [2]
-  Ruta: /nosotros /historia /gestiones /funciones /contacto
+  Ruta: /nosotros /gestiones /contacto
   Pantalla: Páginas informativas (Publicas.jsx)
   Acceso: Público. Se renderizan mediante el componente PaginaPublica.
 
@@ -158,7 +152,7 @@ Las pantallas consultan datos mediante useAsync(() => api.cursos.listar(), []). 
   - PublicLayout: Navbar + <Outlet /> + Footer. En /ingresar cambia la clase del main para dibujar la pantalla de dos paneles.
   - AppLayout: barra lateral oscura con navegación adaptada al rol (la opción “Categorías” solo aparece para administración), cabecera con selector de tema y acción “Salir”, y atributo data-rol para aplicar el color de acento del perfil. Incluye el enlace “Saltar al contenido”.
   - ui.jsx agrupa las piezas reutilizables: Cargando, ErrorCaja, Vacio, StatCard, Badge, BadgeRiesgo, Campo, Modal (basado en <dialog>), Confirmar, Tabs, BarList y Encabezado.
-  - Portada y páginas informativas: Hero, Audiencias, Historia, Gestiones, Features (con data/funcionalidades.js) e IlustracionEstudio (SVG del login).
+  - Portada y páginas informativas: Hero, Audiencias, Historia, Gestiones e IlustracionEstudio (SVG del login).
 
 3.6 Pantallas activas por rol
 -----------------------------
@@ -292,13 +286,13 @@ Cada hallazgo incluye su ubicación, impacto y una propuesta de corrección. La 
 6.1 Prioridad alta
 ------------------
 ------------------------------------------------------------------------------
-A1 — Las rutas de las ilustraciones de “Funciones” fallan en producción — PRIORIDAD ALTA
+A1 — Las rutas de las ilustraciones de “Funciones” fallaban en producción (sección retirada)
 ------------------------------------------------------------------------------
 Dónde:
-    src/data/funcionalidades.js (propiedad imagen) y vite.config.js (base).
+    Antiguo src/data/funcionalidades.js (propiedad imagen) y vite.config.js (base).
 
 Impacto:
-    Las rutas son absolutas (/funcion-cursos.svg). Con base: '/Proyecto-Final-Software/', el sitio se publica en un subdirectorio, pero el navegador solicita https://usuario.github.io/funcion-cursos.svg desde la raíz del dominio y recibe un 404. Vite ajusta las referencias procesadas desde index.html, pero no reescribe automáticamente las cadenas definidas en JavaScript.
+    Las rutas eran absolutas (/funcion-cursos.svg). Con base: '/Proyecto-Final-Software/', el sitio se publica en un subdirectorio, pero el navegador solicita https://usuario.github.io/funcion-cursos.svg desde la raíz del dominio y recibe un 404. La sección Funciones y sus ilustraciones se retiraron posteriormente, así que este hallazgo ya no aplica al sitio actual.
 
 Solución:
     Construir la ruta mediante import.meta.env.BASE_URL, cuyo valor corresponde a / en desarrollo y a la base configurada en producción:
@@ -394,7 +388,7 @@ Solución:
 M1 — No se gestiona el desplazamiento al cambiar de ruta ni al navegar con anclas — PRIORIDAD MEDIA
 ------------------------------------------------------------------------------
 Dónde:
-    src/App.jsx; enlaces /funciones#funcionalidades en Hero.jsx.
+    Antiguamente, src/App.jsx y los enlaces /funciones#funcionalidades en Hero.jsx. La ruta y esos enlaces se retiraron del sitio.
 
 Impacto:
     La navegación entre rutas no reinicia de forma consistente la posición de desplazamiento. Al cambiar desde una página larga, la siguiente puede mostrarse a mitad de página. Además, los enlaces con ancla (#funcionalidades) no siempre desplazan al elemento correspondiente.
@@ -667,7 +661,7 @@ Secuencia sugerida según impacto y esfuerzo. Las estimaciones son aproximadas y
   - Navegar con teclado hasta “Saltar al contenido” y activarlo: el foco debe moverse al contenido sin cambiar de ruta (A2).
   - Validar por separado una sesión expirada y un fallo temporal de red al restaurarla. La sesión debe invalidarse ante un 401, pero conservarse ante un error de conectividad (A3).
   - Detener el backend y recargar /app: el mensaje debe ser comprensible y un fallo de red no debe borrar la sesión (A3, M8).
-  - Abrir /#/funciones, desplazarse hacia abajo y navegar a otra ruta: la nueva vista debe comenzar en la posición prevista (M1).
+  - Caso histórico: abrir /#/funciones, desplazarse hacia abajo y navegar a otra ruta (M1). La ruta se retiró del sitio.
   - Como usuario de administración, matricular a un estudiante: la vista y su posición de desplazamiento deben mantenerse durante la recarga (M2).
   - Abrir /#/app/cursos/abc y /#/app/ruta-falsa: cada ruta debe presentar un mensaje coherente dentro del layout del panel (B3, B4).
   - Activar el tema oscuro y recargar: no debe aparecer un destello del tema claro (B1).

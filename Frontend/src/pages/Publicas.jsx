@@ -1,7 +1,5 @@
 import Audiencias from '../components/Audiencias.jsx'
-import Features from '../components/Features.jsx'
 import Gestiones from '../components/Gestiones.jsx'
-import Historia from '../components/Historia.jsx'
 import { Link } from 'react-router-dom'
 
 function PaginaPublica({ etiqueta, titulo, descripcion, children }) {
@@ -21,16 +19,8 @@ export function NosotrosPage() {
   return <PaginaPublica etiqueta="Quiénes somos" titulo="Una comunidad académica, mejor conectada." descripcion="HomeClass reúne la información y las herramientas que necesitan las personas que enseñan, aprenden y coordinan."><Audiencias /></PaginaPublica>
 }
 
-export function HistoriaPage() {
-  return <PaginaPublica etiqueta="Nuestra historia" titulo="Una idea nacida de una necesidad académica." descripcion="HomeClass es un proyecto de Ingeniería de Software enfocado en hacer más claro el seguimiento de cursos."><Historia /></PaginaPublica>
-}
-
 export function GestionesPage() {
   return <PaginaPublica etiqueta="Gestiones" titulo="Herramientas para cada responsabilidad." descripcion="Las acciones disponibles se organizan según el perfil y los permisos asignados por la institución."><Gestiones /></PaginaPublica>
-}
-
-export function FuncionesPage() {
-  return <PaginaPublica etiqueta="Funcionalidades" titulo="El trabajo del curso, en un solo espacio." descripcion="Explora las herramientas conectadas al catálogo, contenido y comunicación que ofrece la base de datos actual."><Features /></PaginaPublica>
 }
 
 export function ContactoPage() {
@@ -105,7 +95,6 @@ export function ContactoPage() {
         </div>
       </section>
       <section className="contacto-canal">
-        <span className="landing-gestion-icono"><i className="bi bi-building-check" /></span>
         <div><h2>Canal de atención institucional</h2><p>El administrador de tu institución gestiona invitaciones, permisos y cursos. Si ya tienes cuenta, ingresa a HomeClass para continuar.</p></div>
         <div className="landing-contacto-acciones">
           <Link className="btn btn-landing" to="/ingresar">Ir a ingresar <i className="bi bi-arrow-right" /></Link>
